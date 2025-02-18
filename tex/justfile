@@ -1,0 +1,39 @@
+# default:
+#   just --list
+
+convert:
+  pandoc \
+    --wrap=preserve \
+    --strip-comments=false \
+    ../paper.typ -o paper.tex
+
+substitute-sed:
+  sed -r -e " \
+    s/\\[\\begin{array}{r}/\\begin{mathpar}/g; \
+    s/\\end{array}\\]/\\end{mathpar}/g; \
+    s/\\frac/\\dfrac/g; \
+    s/{\\text{(\w+)}/{\\text{\sc \1}/g; \
+    " -i ".tmp" paper.tex
+
+substitute:
+  #!/usr/bin/env ruby
+  File
+    .open('paper.tex')
+    .read
+    .gsub(/\\begin{array}{r}/, '\begin{array}{c}')
+    .gsub(/\\frac/, '\dfrac')
+     # .gsub(/{\\text{(\w+)}/, '{\\text{\sc \1}')
+    .tap { |str| File.write('paper.tex', str) }
+
+# File.open('paper.tex').readlines.each { |line|
+#   line.sub! /\\begin{array}{r}/, '\begin{array}{c}'
+#   line.sub! /\\frac/, '\dfrac'
+# }.join.tap { |str| File.write('paper.tex', str) }
+
+compile:
+  latexmk -pdfxe main.tex
+
+all: convert substitute compile
+
+clean:
+  latexmk -c

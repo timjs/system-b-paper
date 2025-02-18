@@ -1,0 +1,54 @@
+\documentclass{acmart}
+
+% \usepackage{fontenc}
+% \setmonofont{Inconsolata}
+%   [RawFeature={fallback={Libertinus Serif}}]
+\usepackage{mathpartir}
+
+\citestyle{acmauthoryear}
+
+\newenvironment{Shaded}{\ttfamily\obeyspaces\obeylines}{}
+\newenvironment{Highlighting}[1][]{}{}
+\newcommand{\KeywordTok}[1]{{\bfseries #1}}
+\newcommand{\FunctionTok}[1]{{\itshape #1}}
+\newcommand{\OperatorTok}[1]{#1}
+\newcommand{\DataTypeTok}[1]{#1}
+\newcommand{\DecValTok}[1]{#1}
+\newcommand{\BuiltInTok}[1]{#1}
+\newcommand{\OtherTok}[1]{#1}
+\newcommand{\NormalTok}[1]{#1}
+\newcommand{\CommentTok}[1]{{\color{gray} #1}}
+
+\begin{document}
+
+\title{Boo! Borrowing is not scary, it is second class}
+
+\author{Tim Steenvoorden}
+\email{tim.steenvoorden@ou.nl}
+\orcid{0002-8436-2054}
+\affiliation{%
+  \institution{Open University of The Netherlands}
+  \city{Heerlen}
+  \country{The Netherlands}
+}
+
+\renewcommand{\shortauthors}{Steenvoorden}
+
+\begin{abstract}
+  % \input{abstract}
+\end{abstract}
+
+\begin{CCSXML}
+  % TODO
+\end{CCSXML}
+
+\keywords{} %TODO
+
+\maketitle
+
+\input{paper}
+
+\bibliographystyle{ACM-Reference-Format}
+\bibliography{dblp,other}
+
+\end{document}
