@@ -1,6 +1,6 @@
 #import "helpers.typ": *
 
-#let setup(body) = {
+#let init(body) = {
 
   set raw(syntaxes: ("assets/koka.sublime-syntax", "assets/fsharp.sublime-syntax")) // theme: "black-white.tmTheme")
 

@@ -20,12 +20,12 @@
   acmJournal: "JACM",
 )
 
-#import "lib/styles.typ"
+#import "lib/fixes.typ"
 #import "lib/definitions.typ": *
 #import "lib/judgements.typ": *
 #import "lib/logos.typ"
 
-#show: styles.setup
+#show: fixes.init
 #show: logos.init
 
 

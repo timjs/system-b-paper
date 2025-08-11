@@ -12,6 +12,7 @@
   show "Agda": smallcaps[Agda]
   show "Idris": smallcaps[Idris]
   show "Rocq": smallcaps[Rocq]
+  show "Lean": smallcaps[Lean]
 
   show "Boo": smallcaps[Boo]
   show "Boos": smallcaps[Boos]
