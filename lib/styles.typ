@@ -26,6 +26,45 @@
   show raw: text.with(font: "Fira Code") // (font: "Libertinus Sans")
   set raw(syntaxes: ("assets/koka.sublime-syntax", "assets/fsharp.sublime-syntax")) // theme: "black-white.tmTheme")
 
+  // HACK!
+  // Use custom counter that keeps track of enum items.
+  let enum-numbering = (..it) => {
+    counter("enum").update(it.pos())
+    numbering("1.1.", ..it)
+  }
+  set enum(numbering: enum-numbering, full: true)
+  show ref: it => {
+    let el = it.element
+    // if el != none and el.func() == enum.item {
+    //   // Reference to an enum.item. Currently only works for _explicitly_ numbered enums; also, the
+    //   // label must be immediately after the enum.item, but _not_ part of it (i.e., not indented).
+    //   let sup = it.supplement;
+    //   let (text, style) = if sup == auto {
+    //     // Default reference text and style.
+    //     ("", "(1.1)")
+    //   } else if sup.func() == text {
+    //     // The author provided a replacement for "Item"
+    //     ([#sup.text~], "1")
+    //   } else {
+    //     // The author provided a replacement for "Item" and a numbering scheme.
+    //     let ch = sup.children
+    //     (ch.slice(0, -1).join(), ch.at(-1).text)
+    //   }
+    //   link(el.location())[#text#numbering(style, el.number)]
+    if el != none and el.func() == text {
+      let sup = it.supplement;
+      // Check if the author provided a replacement for "Case"
+      let text = if sup == auto { "Case" } else if type(sup) == content { sup } else { "Case" }
+      // Override enum references.
+      // As `enum.item` is currently not a "locatable" element,
+      // we're using our own counter from above.
+      link(el.location())[#text~#numbering("(1.1)", ..counter("enum").at(el.location()))]
+    } else {
+      // Other references as usual.
+      it
+    }
+  }
+
   body
 
 }

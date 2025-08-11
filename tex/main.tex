@@ -1,23 +1,17 @@
-\documentclass{acmart}
+\documentclass[acmsmall,review]{acmart}
 
-% \usepackage{fontenc}
+% \usepackage[utf8]{inputenc}
+% \usepackage[T1]{fontenc}
 % \setmonofont{Inconsolata}
 %   [RawFeature={fallback={Libertinus Serif}}]
 \usepackage{mathpartir}
+\usepackage{cleveref}
+\usepackage{listings}
+
+\input{macros.tex}
+\input{languages.tex}
 
 \citestyle{acmauthoryear}
-
-\newenvironment{Shaded}{\ttfamily\obeyspaces\obeylines}{}
-\newenvironment{Highlighting}[1][]{}{}
-\newcommand{\KeywordTok}[1]{{\bfseries #1}}
-\newcommand{\FunctionTok}[1]{{\itshape #1}}
-\newcommand{\OperatorTok}[1]{#1}
-\newcommand{\DataTypeTok}[1]{#1}
-\newcommand{\DecValTok}[1]{#1}
-\newcommand{\BuiltInTok}[1]{#1}
-\newcommand{\OtherTok}[1]{#1}
-\newcommand{\NormalTok}[1]{#1}
-\newcommand{\CommentTok}[1]{{\color{gray} #1}}
 
 \begin{document}
 

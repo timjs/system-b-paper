@@ -1,174 +1,166 @@
 \section{Introduction}
 
-\paragraph{Context}
-
-Traditionally, functional programming is known as a good method for designing complex computer systems.
+Traditionally, functional programming is known as a good paradigm to program robust complex computer systems.
 Use of higher-order functions and immutable datatypes aid in modularisation and reasoning.
-Because of the same features, functional programming is not regarded suitable for systems programming.
-Higher-order functions often involve the use of closures.
-Manipulating immutable datatypes involves extensive copying.
+At the same time, because of these features, functional programming is not regarded suitable for systems programming.
+Higher-order functions often involve the use of closures and
+manipulating immutable datatypes involves extensive copying.
 Both usually happen on the heap, making use of garbage collectors to manage memory.
-These are either not available or not desirable because of memory restrictions.
+In case of embedded systems, kernel modules, and hardware drivers,
+these are either not available or not desirable because of memory restrictions.
+It seems systems programming is out of scope for functional programming languages.
 
-\paragraph{Challenges}
-
-Currently, there are two ways to allow functional languages for systems programming.
-The first is to use reference counting instead of mark-and-sweep garbage collectors.
+Currently, there are two ways to \cite{allow} functional languages for systems programming.
+The first is to make automatic memory management deterministic by
+using reference counting instead of mark-and-sweep garbage collectors.
 Although this has quite some overhead at runtime,
-deallocation times become deterministic and
-one can minimise the amount of refcount manipulations using static analysis {[}conf-pldi-ReinkingXML21{]}.
+one can minimise the amount of refcount manipulations using static analysis \cite{conf-pldi-ReinkingXML21}.
 As a further optimisation, at runtime, the refcount can be used to determine if data is uniquely owned,
 allowing for in-place mutation.
 However, there is still the need for a heap,
 which is not always available on low-level systems.
 
 The second approach is to get rid of heap usage and garbage collectors entirely.
-To do this, we need a tight type system preventing us from accidental heap allocation.
-Examples are full linear type systems {[}conf-ifip2-Wadler90{]}{[}journals-pacmpl-BernardyBNJS18{]}{[}journals-jfp-OConnorCRJAKMSK21{]}
-which statically guarantee that every binding is used only once.
+This requires tight type systems preventing accidental heap allocation.
+Linear types can statically guarantee that every binding is used only once \cite{conf-ifip2-Wadler90,journals-pacmpl-BernardyBNJS18,journals-jfp-OConnorCRJAKMSK21}.
 When using linear types only, we can be sure each binding points to uniquely owned data and modify it in-place.
-Other languages, like Clean {[}plasmeijer2002clean{]}, use uniqueness types additional to shared types
-for ensured in-place updates or unique state threading.
+However, as we will see shortly, full linear systems make it hard to program in a higher-order fashion.
 
-\paragraph{Motivation}
+\subsection{Motivation}
 
-Full linear systems, however, make it hard to program in a higher-order fashion.
-Take as an example the \texttt{filter} function on lists, in Haskell syntax:
+Take as an example below implementation to filter lists in Haskell:
 
-\begin{Shaded}
-\begin{Highlighting}[]
-\FunctionTok{filter}\NormalTok{ f xs }\OtherTok{=} \KeywordTok{case}\NormalTok{ xs }\KeywordTok{of}
-\NormalTok{  [] }\OtherTok{{-}\textgreater{}}\NormalTok{ []}
-\NormalTok{  x }\OperatorTok{:}\NormalTok{ xx }\OtherTok{{-}\textgreater{}} \KeywordTok{if}\NormalTok{ f x}
-    \KeywordTok{then}\NormalTok{ x }\OperatorTok{:} \FunctionTok{filter}\NormalTok{ f xx}
-    \KeywordTok{else} \FunctionTok{filter}\NormalTok{ f xx}
-\end{Highlighting}
-\end{Shaded}
+\begin{BOO}
+filter p xs = case xs of
+  [] -> []
+  x : xx -> if p x
+    then x : filter p xx
+    else filter p xx
+\end{BOO}
 
 When assigning a linear type to this function,
 it would look something like this:
 
-\begin{Shaded}
-\begin{Highlighting}[]
-\FunctionTok{filter}\OtherTok{ ::}\NormalTok{ (a }\OperatorTok{{-}*} \DataTypeTok{Bool}\NormalTok{) }\OperatorTok{{-}*} \DataTypeTok{List}\NormalTok{ a }\OperatorTok{{-}*} \DataTypeTok{List}\NormalTok{ a   }\CommentTok{{-}{-} Wrong!}
-\end{Highlighting}
-\end{Shaded}
+\begin{BOO}
+filter :: (a -* Bool) -* List a -* List a   -- Wrong!
+\end{BOO}
 
 Here we use the lollipop arrow \texttt{-*} instead of to the normal \texttt{-\textgreater{}} arrow
-to state that all parameters, \texttt{f} and \texttt{xs} in this case, are linear:
+to state that all parameters, \texttt{p} and \texttt{xs} in this case, are linear:
 they are restricted to be used exactly once.
 The pattern match on \texttt{xs} consumes the value, and makes the head \texttt{x} and tail \texttt{xx} also linearly available.
 
 Now we immediately see a problem:
-\texttt{f} needs to be applied to each element of the list and also be threaded through all calls to \texttt{filter}.
-We have to make \texttt{f} available more then once,
+\texttt{p} needs to be applied to each element of the list and also be threaded through all calls to \texttt{filter}.
+We have to make \texttt{p} available more then once,
 forcing us to incorporate unrestrictedness into our type system.
-This sneaks in the need for garbage collection in our language implementation
-and stratifies our language with functions for linear and unrestricted usage.
-Linear Haskell {[}journals-pacmpl-BernardyBNJS18{]} is able to express this mixture:
+Linear Haskell \cite{journals-pacmpl-BernardyBNJS18} is able to express this mixture:
 
-\begin{Shaded}
-\begin{Highlighting}[]
-\FunctionTok{filter}\OtherTok{ ::}\NormalTok{ (a }\OperatorTok{{-}*} \DataTypeTok{Bool}\NormalTok{) }\OtherTok{{-}\textgreater{}} \DataTypeTok{List}\NormalTok{ a }\OperatorTok{{-}*} \DataTypeTok{List}\NormalTok{ a   }\CommentTok{{-}{-} Also wrong!}
-\end{Highlighting}
-\end{Shaded}
+\begin{BOO}
+filter :: (a -* Bool) -> List a -* List a   -- Also wrong!
+\end{BOO}
 
-Now, \texttt{f} itself is unrestricted but still takes a linear argument.
+Now, \texttt{p} itself is unrestricted but still takes a linear argument.
 This raises another problem.
 On line~1, \texttt{xs} is matched linearly.
 This means \texttt{x} and \texttt{xx} on line~3 are linear as well.
-Therefore, the call \texttt{f\ x} on line~3 consumes \texttt{x},
+Therefore, the call \texttt{p\ x} on line~3 consumes \texttt{x},
 so we cannot use it any more in case we want to keep the element on line~4.
-To solve this, we can make \texttt{f} unrestricted in its first parameter, yielding:
+To solve this, we can make \texttt{p} unrestricted in its first parameter, yielding:
 
-\begin{Shaded}
-\begin{Highlighting}[]
-\FunctionTok{filter}\OtherTok{ ::}\NormalTok{ (a }\OtherTok{{-}\textgreater{}} \DataTypeTok{Bool}\NormalTok{) }\OtherTok{{-}\textgreater{}} \DataTypeTok{List}\NormalTok{ a }\OperatorTok{{-}*} \DataTypeTok{List}\NormalTok{ a   }\CommentTok{{-}{-} Still wrong!}
-\end{Highlighting}
-\end{Shaded}
+\begin{BOO}
+filter :: (a -> Bool) -> List a -* List a   -- Still wrong!
+\end{BOO}
 
 Again, this fix will not help us as, in general,
-we cannot pass a linear value as an unrestricted parameter.
-In this case, we cannot guarantee that \texttt{f} does not duplicate its parameter.\footnote{In this particular case, it would be hard to design a pure function returning a boolean duplicating its parameter.}
+we cannot pass linear values to unrestricted parameters:
+we cannot guarantee that \texttt{p} does not duplicate its parameter.\footnote{In this particular case, it would be hard to design a pure function returning a boolean duplicating its parameter.}
 For this reason, Linear Haskell provides a \texttt{Dupable} class in its base library,
-yielding the following type for \texttt{filter} in Linear Haskell:
+yielding the following final type for \texttt{filter} in Linear Haskell:
 
-\begin{Shaded}
-\begin{Highlighting}[]
-\FunctionTok{filter}\OtherTok{ ::} \DataTypeTok{Dupable}\NormalTok{ a }\OtherTok{=\textgreater{}}\NormalTok{ (a }\OperatorTok{{-}*} \DataTypeTok{Bool}\NormalTok{) }\OtherTok{{-}\textgreater{}} \DataTypeTok{List}\NormalTok{ a }\OperatorTok{{-}*} \DataTypeTok{List}\NormalTok{ a   }\CommentTok{{-}{-} Finally fixed!}
-\end{Highlighting}
-\end{Shaded}
+\begin{BOO}
+filter :: Dupable a => (a -* Bool) -> List a -* List a   -- Finally fixed!
+\end{BOO}
 
 The \texttt{Dupable} constraint on \texttt{a} means we restrict \texttt{filter} to lists of types that can freely be duplicated.
-So, on a type-by-type base, we need to specify that type is dupable.
-Note predicate function \texttt{f} is still passed unrestricted.
+So, on a type-by-type base, we need to specify that type is duplicatable.
+Predicate function \texttt{p} is still passed unrestricted.
 
-\paragraph{Solution}
+In the end, we cannot type \texttt{filter} with linear types only,
+they are too restrictive.
+We are forced to mix linear and shared types in our language.
+On the language level, this is not a problem,
+but on the implementation level this sneaks in the need for garbage collection.
+Exactly this is what we hoped to prevent!
 
-We propose a different solution,
-where we do not need mixing owned and shared types.
-Instead, we allow \emph{borrowing} of owned values.
-In Boo, we can write \texttt{filter} like so, using a Koka-like syntax:
+\subsection{Solution}
 
-\begin{Shaded}
-\begin{Highlighting}[]
-\NormalTok{fun filter(1 xs: list\textless{}a\textgreater{}, ε f: (ε x: a) {-}\textgreater{} bool) {-}\textgreater{} list\textless{}a\textgreater{}}
-\NormalTok{  match 1 xs}
-\NormalTok{    Nil {-}\textgreater{} Nil}
-\NormalTok{    Cons(x, xx) {-}\textgreater{} if \{x| f(x) \}}
-\NormalTok{      then Cons(x, xx.filter(f))}
-\NormalTok{      else xx.filter(f)}
-\end{Highlighting}
-\end{Shaded}
+We propose a solution where we do not need mixing of owned and shared types.
+Instead, we allow \emph{borrowing} of owned \emph{bindings}.
+We introduce Boo, a small functional programming language with quantity annotations on binders.
+In Boo, we can write \texttt{filter} like so:
 
-In Boo, we annotate the binders with one of two \emph{quantities}:
+\begin{BOO}
+fun filter(1 xs: list<a>, $\textsf{ε}$ p: ($\textsf{ε}$ x: a) -> bool) -> list<a>
+  match 1 xs
+    Nil -> Nil
+    Cons(x, xx) -> if {x| p(x) }
+      then Cons(x, xx.filter(p))
+      else xx.filter(p)
+\end{BOO}
+
+We see parameters in Boo are annotated with one of two \emph{quantities}:
 1 for owned (affine linear) usage, and
-ε for borrowed (non-escaping) usage.
+$\textsf{ε}$ for borrowed (non-escaping) usage.
 In our example, \texttt{xs} is \emph{owned}, and thus restricted to be used exactly once or not at all.
 This means \texttt{xs} can be modified in-place.
-Predicate function \texttt{f} and its parameter \texttt{x} are \emph{borrowed}.
+Predicate function \texttt{p} and its parameter \texttt{x} are \emph{borrowed}.
 Borrowed binders can be used multiple times, but cannot \emph{escape} their scope.
 They are thus safe to pass on to other functions,
 but cannot be returned as a result or saved in data structures.
-
-The borrowing block \texttt{\{x\textbar{}\ f(x)\ \}} on line~4,
-turns binding \texttt{x} from owned into borrowed during the evaluation of the expression \texttt{f(x)}.
-Now \texttt{f} can take \texttt{x} as a borrowed parameter.
+The borrowing block \texttt{\{x\textbar{}\ p(x)\ \}} on line~4,
+turns binding \texttt{x} from owned into borrowed during the evaluation of the expression \texttt{p(x)}.
+Now \texttt{p} can take \texttt{x} as a borrowed parameter.
 
 By allowing higher-order functions in Boo,
 we need to take special care of the available bindings when constructing closures.
 Say, we write the following code filtering a list for multiples of 3:
 
-\begin{Shaded}
-\begin{Highlighting}[]
-\NormalTok{val ε m = 3}
-\NormalTok{val 1 xs = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]}
-\NormalTok{val 1 ys = xs.filter(fn(x) x \% m == 0)}
-\NormalTok{// =\textgreater{} ys == [3, 6, 9]}
-\end{Highlighting}
-\end{Shaded}
+\begin{BOO}
+val $\textsf{ε}$ m = 3
+val 1 xs = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+val 1 ys = xs.filter(fn(x) x % m == 0)
+// => ys == [3, 6, 9]
+\end{BOO}
 
 The lambda on line~3 closes of variable \texttt{m} from its outer scope.
 As \texttt{filter} asks for a borrowed function,
 we allow the construction of a borrowed lambda closing over borrowed variables.
 
-\paragraph{Contributions}
+\subsection{Contributions}
+
+The combination of linear types and borrowing is a promising approach
+to incorporate functional programming techniques like higher-order functions and immutable data types
+into systems programming.
+By annotating binders instead of types,
+there is no stratification of linear and non-linear types.
+Every type can be owned and therefore be mutated in-place, or borrowed.
+Also, as borrowed values cannot escape their scope, they coincide with being second class.
 
 In the remaining of this paper, we dive into the Boo language and its properties.
 We present:
 
-\(\lbrack\text{the language Boo,
-a small functional programming language with quantity annotations on the binders;}\rbrack\)
+\(\lbrack\text{the language Boo, a small functional programming language with quantity annotations on binders;}\rbrack\)
 
 \paragraph{Organisation}
 
 The remaining of this paper is structured as follows.
-In the next section, \hyperref[examples]{{[}examples{]}}, we show motivating examples of Boo,
+In the next section, \cref{examples}, we show motivating examples of Boo,
 discussing the implications of our design.
-Thereafter, we formalise the syntax and semantics of Boo in \hyperref[theory]{{[}theory{]}}.
-Section \hyperref[metatheory]{{[}metatheory{]}} contains metatheoretical properties of Boo.
-After discussing related work in \hyperref[related-work]{{[}related-work{]}},
-we conclude and present future work in \hyperref[conclusion]{{[}conclusion{]}}.
+Thereafter, we formalise the syntax and semantics of Boo in \cref{theory}.
+Section \cref{metatheory} contains metatheoretical properties of Boo.
+After discussing related work in \cref{related-work},
+we conclude and present future work in \cref{conclusion}.
 
 \section{Examples}\label{examples}
 
@@ -185,95 +177,85 @@ x_{0.}f\left( {\overline{{}\, x\:}}^{n} \right) & \rightsquigarrow f\left( x_{0}
 
 \subsection{Simple owning and sharing functions}
 
-\begin{Shaded}
-\begin{Highlighting}[]
-\NormalTok{fun identity(1 x: a) {-}\textgreater{} a}
-\NormalTok{  x}
+\begin{BOO}
+fun identity(1 x: a) -> a
+  x
 
-\NormalTok{fun duplicate(ω x: a) {-}\textgreater{} (a, a)}
-\NormalTok{  (x, x)}
+fun duplicate(ω x: a) -> (a, a)
+  (x, x)
 
-\NormalTok{fun free(1 x: a) {-}\textgreater{} ()}
-\NormalTok{  ()}
-\end{Highlighting}
-\end{Shaded}
+fun free(1 x: a) -> ()
+  ()
+\end{BOO}
 
 \subsection{First-order functions on lists}
 
-\begin{Shaded}
-\begin{Highlighting}[]
-\NormalTok{fun length(ε xs: list\textless{}a\textgreater{}) {-}\textgreater{} nat}
-\NormalTok{  match ε xs}
-\NormalTok{    Nil {-}\textgreater{} 0}
-\NormalTok{    Cons(\_, xx) {-}\textgreater{} 1 + xx.length()}
+\begin{BOO}
+fun length($\textsf{ε}$ xs: list<a>) -> nat
+  match $\textsf{ε}$ xs
+    Nil -> 0
+    Cons(_, xx) -> 1 + xx.length()
 
-\NormalTok{fun contains(ε xs: list\textless{}a\textgreater{}, ε y: a) {-}\textgreater{} bool}
-\NormalTok{  match ε xs}
-\NormalTok{    Nil {-}\textgreater{} False}
-\NormalTok{    Cons(x, xx) {-}\textgreater{} when}
-\NormalTok{      x == y {-}\textgreater{} True}
-\NormalTok{      else {-}\textgreater{} xx.contains(y)}
+fun contains($\textsf{ε}$ xs: list<a>, $\textsf{ε}$ y: a) -> bool
+  match $\textsf{ε}$ xs
+    Nil -> False
+    Cons(x, xx) -> when
+      x == y -> True
+      else -> xx.contains(y)
 
-\NormalTok{fun append(1 xs: list\textless{}a\textgreater{}, 1 ys: list\textless{}a\textgreater{}) {-}\textgreater{} list\textless{}a\textgreater{}}
-\NormalTok{  match 1 xs}
-\NormalTok{    Nil {-}\textgreater{} ys}
-\NormalTok{    Cons(x, xx) {-}\textgreater{} Cons(x, xx.append(ys))}
+fun append(1 xs: list<a>, 1 ys: list<a>) -> list<a>
+  match 1 xs
+    Nil -> ys
+    Cons(x, xx) -> Cons(x, xx.append(ys))
 
-\NormalTok{fun dedup(1 xs: list\textless{}a\textgreater{}, ε ys: list\textless{}a\textgreater{}) {-}\textgreater{} list\textless{}a\textgreater{}}
-\NormalTok{  match 1 xs}
-\NormalTok{    Nil {-}\textgreater{} Nil}
-\NormalTok{    Cons(x, xx) {-}\textgreater{} when}
-\NormalTok{      ys.contains(x) {-}\textgreater{} xx.dedup(ys)}
-\NormalTok{      else {-}\textgreater{} Cons(x, xx.dedup(ys))}
-\end{Highlighting}
-\end{Shaded}
+fun dedup(1 xs: list<a>, $\textsf{ε}$ ys: list<a>) -> list<a>
+  match 1 xs
+    Nil -> Nil
+    Cons(x, xx) -> when
+      ys.contains(x) -> xx.dedup(ys)
+      else -> Cons(x, xx.dedup(ys))
+\end{BOO}
 
 \subsection{Second-order functions on lists}
 
-\begin{Shaded}
-\begin{Highlighting}[]
-\NormalTok{fun iterate(ε xs: list\textless{}a\textgreater{}, ε f: (ε x: a) {-}\textgreater{} η ()) {-}\textgreater{} η ()}
-\NormalTok{  match ε xs}
-\NormalTok{    Nil {-}\textgreater{} ()}
-\NormalTok{    Cons(x, xx) {-}\textgreater{}}
-\NormalTok{      f(x)}
-\NormalTok{      xx.iterate(f)}
+\begin{BOO}
+fun iterate($\textsf{ε}$ xs: list<a>, $\textsf{ε}$ f: ($\textsf{ε}$ x: a) -> η ()) -> η ()
+  match $\textsf{ε}$ xs
+    Nil -> ()
+    Cons(x, xx) ->
+      f(x)
+      xx.iterate(f)
 
-\NormalTok{fun map(1 xs: list\textless{}a\textgreater{}, ε f: (1 x: a) {-}\textgreater{} η b) {-}\textgreater{} η list\textless{}b\textgreater{}}
-\NormalTok{  match 1 xs}
-\NormalTok{    Nil {-}\textgreater{} Nil}
-\NormalTok{    Cons(x, xx) {-}\textgreater{} Cons(f(x), xx.map(f))}
+fun map(1 xs: list<a>, $\textsf{ε}$ f: (1 x: a) -> η b) -> η list<b>
+  match 1 xs
+    Nil -> Nil
+    Cons(x, xx) -> Cons(f(x), xx.map(f))
 
-\NormalTok{fun filter(1 xs: list\textless{}a\textgreater{}, ε f: (ε x: a) {-}\textgreater{} η bool) {-}\textgreater{} η list\textless{}a\textgreater{}}
-\NormalTok{  match 1 xs}
-\NormalTok{    Nil {-}\textgreater{} Nil}
-\NormalTok{    Cons(x, xx) {-}\textgreater{} if f(x)}
-\NormalTok{      then Cons(x, xx.filter(f))}
-\NormalTok{      else xx.filter(f)}
-\end{Highlighting}
-\end{Shaded}
+fun filter(1 xs: list<a>, $\textsf{ε}$ f: ($\textsf{ε}$ x: a) -> η bool) -> η list<a>
+  match 1 xs
+    Nil -> Nil
+    Cons(x, xx) -> if f(x)
+      then Cons(x, xx.filter(f))
+      else xx.filter(f)
+\end{BOO}
 
 We'd like to invert the argument Rust makes about borrowing:
 If and only if a value is used borrowed, it cannot escape the function,
 and therefore it can be allocated on the stack.
 
-\begin{Shaded}
-\begin{Highlighting}[]
-\NormalTok{fun filter{-}map(1 xs: list\textless{}a\textgreater{}, ε f: (1 x: a) {-}\textgreater{} η option\textless{}b\textgreater{}) {-}\textgreater{} η list\textless{}b\textgreater{}}
-\NormalTok{  match 1 xs}
-\NormalTok{    Nil {-}\textgreater{} Nil}
-\NormalTok{    Cons(x, xx) {-}\textgreater{} match 1 f(x)}
-\NormalTok{      None {-}\textgreater{} xx.filter{-}map(f)}
-\NormalTok{      Some(y) {-}\textgreater{} Cons(y, xx.filter{-}map(f))}
-\end{Highlighting}
-\end{Shaded}
+\begin{BOO}
+fun filter-map(1 xs: list<a>, $\textsf{ε}$ f: (1 x: a) -> η option<b>) -> η list<b>
+  match 1 xs
+    Nil -> Nil
+    Cons(x, xx) -> match 1 f(x)
+      None -> xx.filter-map(f)
+      Some(y) -> Cons(y, xx.filter-map(f))
+\end{BOO}
 
-\begin{Shaded}
-\begin{Highlighting}[]
-\KeywordTok{fn}\NormalTok{ retain     : (}\OperatorTok{\&}\KeywordTok{mut} \DataTypeTok{Vec}\OperatorTok{\textless{}}\NormalTok{a}\OperatorTok{\textgreater{},}\NormalTok{ f}\OperatorTok{:} \BuiltInTok{FnMut}\NormalTok{(}\OperatorTok{\&}\NormalTok{a)     }\OperatorTok{{-}\textgreater{}} \DataTypeTok{bool}\NormalTok{) }\OperatorTok{{-}\textgreater{}}\NormalTok{ () }\OperatorTok{\{...\}}
-\KeywordTok{fn}\NormalTok{ retain\_mut : (}\OperatorTok{\&}\KeywordTok{mut} \DataTypeTok{Vec}\OperatorTok{\textless{}}\NormalTok{a}\OperatorTok{\textgreater{},}\NormalTok{ f}\OperatorTok{:} \BuiltInTok{FnMut}\NormalTok{(}\OperatorTok{\&}\KeywordTok{mut}\NormalTok{ a) }\OperatorTok{{-}\textgreater{}} \DataTypeTok{bool}\NormalTok{) }\OperatorTok{{-}\textgreater{}}\NormalTok{ () }\OperatorTok{\{...\}}
-\end{Highlighting}
-\end{Shaded}
+\begin{BOO}
+fn retain     : (&mut Vec<a>, f: FnMut(&a)     -> bool) -> () {...}
+fn retain_mut : (&mut Vec<a>, f: FnMut(&mut a) -> bool) -> () {...}
+\end{BOO}
 
 \begin{enumerate}
 \item

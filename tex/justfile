@@ -5,6 +5,7 @@ convert:
   pandoc \
     --wrap=preserve \
     --strip-comments=false \
+    --no-highlight \
     ../paper.typ -o paper.tex
 
 substitute-sed:
@@ -17,12 +18,19 @@ substitute-sed:
 
 substitute:
   #!/usr/bin/env ruby
+  puts "/usr/bin/env ruby"
   File
     .open('paper.tex')
     .read
+    .gsub(/ε/, '$\textsf{ε}$')
     .gsub(/\\begin{array}{r}/, '\begin{array}{c}')
     .gsub(/\\frac/, '\dfrac')
-     # .gsub(/{\\text{(\w+)}/, '{\\text{\sc \1}')
+    .gsub(/\\hyperref\[([a-zA-Z0-9\-]+?)\]{\{\[}([a-zA-Z0-9\-]+?){\]}\}/, '\cref{\1}')
+    .gsub(/{\[}([a-zA-Z0-9\-]+?){\]}/, '\cite{\1}')
+    .gsub(/}\\cite{/, ',')
+    .gsub(/\\begin{verbatim}/, '\\begin{BOO}')
+    .gsub(/\\end{verbatim}/, '\\end{BOO}')
+     # .gsub(/{\\text{(\w+?)}/, '{\\text{\sc \1}')
     .tap { |str| File.write('paper.tex', str) }
 
 # File.open('paper.tex').readlines.each { |line|

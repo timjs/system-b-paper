@@ -1,0 +1,245 @@
+% !TEX root=../main.tex
+%chktex-file 9
+%chktex-file 10
+%chktex-file 17
+
+
+%% Styles %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\lstdefinestyle{common}
+  {escapechar=$
+  ,numbersep=-9pt % to make numbers appear inside the column; otherwise they are in the margin
+  ,showstringspaces=false
+  ,texcl=true
+  ,mathescape=true
+  ,numbers=right
+  ,numberstyle={\tiny}
+  %,escapeinside={\{\}}
+  ,xleftmargin=1\parindent
+  % ,aboveskip=0pt
+  % ,belowskip=0pt
+  }
+
+\lstdefinestyle{natural}
+  {style=common
+  ,columns=fullflexible
+  % ,gobble=2
+  ,breaklines=true
+  ,breakatwhitespace=true
+  % ,literate=
+    %{.}{{$\cdot$}}1
+    %{.}{{\ }}1
+    % {<<}{{$\<$}}1
+    % {>>}{{$\>$}}1
+    % {->}{{$\to$\ }}2
+    % {--}{{--}}1
+    %{_}{{\ }}1
+    %{\ "}{{\ \textquotedblleft}}2
+    %{"\ }{{\textquotedblright\ }}2
+  ,basicstyle={\sffamily}
+  ,keywordstyle=[1]{\bfseries}
+  ,keywordstyle=[2]{\scshape}
+  ,keywordstyle=[3]{}
+  ,commentstyle={\color{gray}}%chktex 6
+  %,identifierstyle={\itshape}
+  ,emphstyle={\itshape} %chktex 6
+  %,stringstyle={\rmfamily}
+  }
+
+\lstdefinestyle{mono}
+  {style=common
+  ,columns=flexible
+  % ,gobble=2
+  ,fontadjust=true
+  ,basicstyle={\ttfamily}
+  ,keywordstyle=[1]{\bfseries}
+  ,keywordstyle=[2]{\scshape}
+  ,keywordstyle=[3]{}
+  ,commentstyle={\color{gray}}%chktex 6
+  %,identifierstyle={\itshape}
+  ,emphstyle={\itshape}%chktex 6
+  %,stringstyle={\ttfamily}
+  }
+
+\lstdefinestyle{literate}
+  {style=natural
+  ,literate=
+    {\\}{{$\lambda$}}1
+    {\\\$}{{\$}}1 %NOTE: otherwise eaten by `\`, NOTE: prevents \$ to be parsed as math escape
+    {\\/}{{$\vee$}}1
+    {/\\}{{$\wedge$}}1
+    {A.}{{$\forall$}}1
+    {E.}{{$\exist$}}1
+    {->}{{$\rightarrow$ }}1
+    {<-}{{$\leftarrow$}}1
+    {-*}{{$\multimap$}}1
+    {=>}{{$\Rightarrow$}}1
+    {==}{{$\equiv$\ }}1
+    {/=}{{$\nequiv$\ }}1
+    {<=}{{$\leq$}}1
+    {>=}{{$\geq$}}1
+    {>>=}{{>>=}}3 %NOTE: otherwise eaten by `>=`
+    {\{|}{{$\{\!|\!$}}1
+    {|\}}{{$\!|\!\}$}}1
+    {\{|*|\}}{{$\{\!|\!\!\star\!\!|\!\}$}}3
+    {<}{{$\langle$}}1
+    {>}{{$\rangle$}}1
+  }
+
+
+%% Definitions %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%% Boo! %%
+
+\lstdefinelanguage{boo}
+  {sensitive=true
+  ,morekeywords=[1]{fun,val,var,match,if,then,else,when,where,with}
+  ,morekeywords=[2]{unit,bool,nat,int,real,list,set,map}
+  ,moreemph={a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z as,bs,cs,ds,es,fs,gs,hs,is,js,ks,ls,ms,ns,os,ps,qs,rs,ss,ts,us,vs,ws,xs,ys,zs,xx,yy,zz}
+  ,morestring=[b]"
+  ,morecomment=[l]//
+  ,morecomment=[n]{{/*}{*/}}
+  ,morecomment=[l]\}
+  ,morecomment=[n]{{\{}{|}}
+  ,morekeywords=[1]{case,of} % Haskell
+  ,morecomment=[l]-- % Haskell
+  }[keywords,strings,comments]
+
+\lstdefinestyle{boo}
+  {style=mono
+  }
+
+\lstnewenvironment{BOO}[1][]
+  {\lstset{language=boo,style=boo,#1}}
+  {}
+% \newcommand{BO}[1][1]
+%   {\lstinline[language=boo,style=boo,#1]}
+% \newcommand{includeBOO}[2][]
+%   {\lstinputlisting[language=boo,style=boo,#1]{#2}}
+
+
+% %% Tasks %%
+
+% \lstdefinelanguage{tasks}
+%   {sensitive=true
+%   ,morekeywords=[1]{let,in,if,then,else,case,of,ref,share,assert,type}
+%   ,morekeywords=[2]{Bool,Int,String,Unit,List, Ref,Task, Time,Date, Passenger,Age,Seat,Booking, Drink,Food,Snack,Light}
+%   ,moreemph={a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z as,bs,cs,ds,es,fs,gs,hs,is,js,ks,ls,ms,ns,os,ps,qs,rs,ss,ts,us,vs,ws,xs,ys,zs}
+%   ,morestring=[b]"%chktex 18
+%   ,morecomment=[l]--
+%   ,morecomment=[n]{\{-}{-\}}
+%   }[keywords,strings,comments]
+% \lstdefinestyle{tasks}
+%   {style=natural
+%   ,literate=
+%     {do}{{$\lambda$}}1
+%     {<<}{{$\<$}}1
+%     {>>}{{$\>$ }}1
+%     {->}{{$\to$ }}1
+%     {|->}{{$\mapsto$ }}1
+%     {==}{{$\equiv$ }}1
+%     {/=}{{$\nequiv$ }}1
+%     {<=}{{$\leq$ }}1
+%     {>=}{{$\geq$ }}1
+%     {*}{{$\times$ }}1
+%     {=<}{{$\in$ }}1
+%     {/<}{{$\not\in$ }}1
+%     {\\/}{{$\vee$ }}1
+%     {/\\}{{$\wedge$ }}1
+%     {>>=}{{$\Step$ }}1
+%     {>>?}{{$\Select$ }}1
+%     {<*>}{{$\Trans$ }}1
+%     {<&>}{{$\Pair$ }}1
+%     {>&<}{{$\Pool$ }}1
+%     {<|>}{{$\Choose$ }}1
+%     {<?>}{{$\Pick$ }}1
+%     {++}{{$\pp$ }}1
+%     {lift}{{$\Lift$}}1
+%     {enter}{{$\Enter$}}1
+%     {update}{{$\Update$}}1
+%     {view}{{$\View$}}1
+%     {change}{{$\Change$}}1
+%     {watch}{{$\Watch$}}1
+%     {fail}{{$\Fail$ }}1
+%     {forever}{{$\Forever$ }}1
+%   }
+
+% \lstnewenvironment{TASK}[1][]
+%   {\lstset{language=tasks,style=tasks,#1}}
+%   {}
+% \newmacro{TS}[1][1]
+%   {\lstinline[language=tasks,style=tasks,#1]}
+% \newmacro{includeTASK}[2][]
+%   {\lstinputlisting[language=tasks,style=tasks,#1]{#2}}
+
+
+% %% Clean %%
+
+% \lstdefinelanguage{clean}{%
+%   sensitive=true,
+% 	alsoletter={ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz_`1234567890},
+% 	alsoletter={~!@\#$\%^\&*-+=?<>:|\\.},
+% 	alsoother={.},
+% 	alsodigit={1234567890},
+% 	morekeywords={generic,implementation,definition,dynamic,module,import,where,in,of,case,let,infix,infixr,infixl,class,instance,with,if,derive,code,In,qualified,otherwise,from,foreign,export,ccall,stdcall},
+% 	sensitive=true,
+% 	morecomment=[l]{//},
+% 	morecomment=[n]{/*}{*/},
+% 	morestring=[b]",%chktex 18
+% 	morestring=[s]{['}{']},%chktex 9
+% 	literate=%
+% 		{\_}{{\raisebox{.15ex}{\_}}}1
+% %		{\~}{{\raisebox{-.6ex}{\textasciitilde}}}1
+% 		{~}{{\textasciitilde}}1
+% 		{...}{{$\cdots$}}3 %chktex 11
+% 		{->}{{$\shortrightarrow$}}2
+% 		{=>}{{$\Rightarrow$}}2
+% 		{\(}{{{\tt(}}}1 %chktex 9
+% 		{\)}{{{\tt)}}}1, %chktex 9
+% 	columns=[c]fixed,
+% 	basicstyle=\tt,
+% 	stringstyle=\em,
+% 	keywordstyle=\bfseries,
+% 	basewidth=0.55em,
+% 	breakatwhitespace=false,
+% 	breaklines=true,
+% 	keepspaces=true,
+% 	showspaces=false,
+% 	showstringspaces=false,
+% 	showtabs=false,
+% 	tabsize=4,
+% 	upquote=true,
+% 	rangeprefix={//},
+% 	includerangemarker=false,
+% 	escapeinside={/*}{*/},
+% }%[keywords,strings,comments]
+
+% % \lstnewenvironment{CLEAN}[1][]
+% %   {\lstset{language=clean,style=flexible,#1}}
+% %   {}
+% \newmacro{CL}[1][]
+%   {\lstinline[language=clean,style=flexible,#1]}
+% \newmacro{includeCLEAN}[2][]
+%   {\lstinputlisting[language=clean,style=flexible,#1]{#2}}
+
+% %TS: Maybe merge this, first take a look at the output
+% % \lstset{%
+% % 	basewidth=0.5em,
+% % 	basicstyle=\tt\small,
+% % 	breakatwhitespace=false,
+% % 	breaklines=true,
+% % 	captionpos=b,
+% % 	columns=[c]fixed,
+% % 	commentstyle=\sl,
+% % 	escapeinside={[+}{+]},  % chktex 9
+% % 	frame=,
+% % 	keepspaces=true,
+% % 	keywordstyle=\bf,
+% % 	showspaces=false,
+% % 	showstringspaces=false,
+% % 	showtabs=false,
+% % 	stringstyle=\it,
+% % 	tabsize=4,
+% % 	upquote=true,
+% % 	numberstyle=\tiny,
+% % }
