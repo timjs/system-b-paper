@@ -31,7 +31,7 @@ $
 
 // #let with = math.dot
 #let with = $comma space$
-#let merge = $sect$
+#let merge = $inter$
 
 //// Language constructs ////
 

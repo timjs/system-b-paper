@@ -1,29 +1,32 @@
+#import "acmart/template.typ": acmart
+#show: acmart.with(
+  format: "acmsmall",
+  title: [Boo! Borrowing isn't scarry, it's second class],
+  authors: (
+    (
+      name: "Tim Steenvoorden",
+      email: "tim.steenvoorden@ou.nl",
+      orcid: "0002-8436-2054",
+      affiliation: (
+        institution: "Open University",
+        streetaddress: "<address>",
+        city: "Heerlen",
+        country: "the Netherlands",
+      ),
+    ),
+  ),
+  abstract: [...],
+
+  acmJournal: "JACM",
+)
+
 #import "lib/styles.typ"
 #import "lib/definitions.typ": *
 #import "lib/judgements.typ": *
 #import "lib/logos.typ"
 
-// #import "acmart/template.typ": acmart
-// #show: acmart.with(
-//   title: [Boo! Borrowing isn't scarry, it's second class],
-//   authors: (
-//     (
-//       name: "Tim Steenvoorden",
-//       email: "tim.steenvoorden@ou.nl",
-//       orcid: "0002-8436-2054",
-//       affiliation: (
-//         institution: "Open University",
-//         streetaddress: "<address>",
-//         city: "Heerlen",
-//         country: "the Netherlands",
-//       ),
-//     ),
-//   ),
-//   acmJournal: "JACM",
-// )
-
-#show: styles.template
-#show: logos.run
+#show: styles.setup
+#show: logos.init
 
 
 = Introduction
@@ -194,7 +197,7 @@ In this section we discuss some examples to showcase the features of Boo.
 == Notation
 
 #set math.lr(size: 1em) // Magic! :-D
-#show math.upright: text
+// #show math.upright: text
 
 $
    x_0.f(many(x, n))                      &~> f(x_0, many(x,n)) \

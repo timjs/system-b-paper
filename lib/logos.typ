@@ -1,4 +1,4 @@
-#let run(body) = {
+#let init(body) = {
 
   //// Languages ////
   show "Clean": smallcaps[Clean]
