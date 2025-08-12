@@ -1,18 +1,19 @@
-#import "basic/commands.typ": *
+#import "../basic/commands.typ": *
 
 //// Setups ////
 
-#let setups = (
-  color: false,
-)
+#let use-coloring = false
+
+
+//// Commands ////
 
 #let quantities = $cal(Q)$
 #let lift(it) = $ceil(it)$
 #let lower(it) = $floor(it)$
 #let freeze(it) = $abs(it)$
 
-#let input = if setups.color {text.with(fill: blue)} else {identity}
-#let output = if setups.color {text.with(fill: red)} else {identity}
+#let input = if use-coloring {text.with(fill: blue)} else {identity}
+#let output = if use-coloring {text.with(fill: red)} else {identity}
 
 #let meta(it) = $greyed(it)$
 

@@ -1,5 +1,10 @@
-#import "acmart/template.typ": acmart
-#show: acmart.with(
+#import "acmart/template.typ"
+#import "basic/setups.typ"
+#import "basic/logos.typ"
+#import "typing/definitions.typ": *
+#import "typing/judgements.typ": *
+
+#show: template.acmart.with(
   format: "acmsmall",
   title: [Boo! Borrowing isn't scarry, it's second class],
   authors: (
@@ -19,13 +24,7 @@
 
   acmJournal: "JACM",
 )
-
-#import "basic/fixes.typ"
-#import "basic/logos.typ"
-#import "definitions.typ": *
-#import "judgements.typ": *
-
-#show: fixes.init
+#show: setups.init
 #show: logos.init
 
 #show heading.where(level: 4).or(heading.where(level: 5)): set heading(numbering: none)
