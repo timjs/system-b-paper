@@ -1,4 +1,4 @@
-#import "commands.typ": *
+#import "basic/commands.typ": *
 
 //// Setups ////
 

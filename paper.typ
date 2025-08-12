@@ -20,13 +20,17 @@
   acmJournal: "JACM",
 )
 
-#import "lib/fixes.typ"
-#import "lib/definitions.typ": *
-#import "lib/judgements.typ": *
-#import "lib/logos.typ"
+#import "basic/fixes.typ"
+#import "basic/logos.typ"
+#import "definitions.typ": *
+#import "judgements.typ": *
 
 #show: fixes.init
 #show: logos.init
+
+#show heading.where(level: 4).or(heading.where(level: 5)): set heading(numbering: none)
+#set math.lr(size: 1em) // Magic! :-D
+
 
 
 = Introduction
@@ -169,7 +173,7 @@ to incorporate functional programming techniques like higher-order functions and
 into systems programming.
 By annotating binders instead of types,
 there is no stratification of linear and non-linear types.
-Every type can be owned and therefore be mutated in-place, or borrowed.
+Every type can be owned, and therefore be mutated in-place, or borrowed.
 Also, as borrowed values cannot escape their scope, they coincide with being second class.
 
 In the remaining of this paper, we dive into the Boo language and its properties.
