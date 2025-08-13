@@ -6,7 +6,7 @@
 
 #show: template.acmart.with(
   format: "acmsmall",
-  title: [Boo! Borrowing isn't scarry, it's second class],
+  title: [System B! Borrowing isn't scarry, it's second class],
   authors: (
     (
       name: "Tim Steenvoorden",
@@ -28,8 +28,6 @@
 #show: logos.init
 
 #show heading.where(level: 4).or(heading.where(level: 5)): set heading(numbering: none)
-#set math.lr(size: 1em) // Magic! :-D
-
 
 
 = Introduction
@@ -128,8 +126,8 @@ Exactly this is what we hoped to prevent!
 == Solution
 We propose a solution where we do not need mixing of owned and shared types.
 Instead, we allow _borrowing_ of owned _bindings_.
-We introduce Boo, a small functional programming language with quantity annotations on binders.
-In Boo, we can write `filter` like so:
+We introduce System B, a small functional programming language with quantity annotations on binders.
+In System B, we can write `filter` like so:
 ```koka
 fun filter(1 xs: list<a>, ε p: (ε x: a) -> bool) -> list<a>
   match 1 xs
@@ -139,7 +137,7 @@ fun filter(1 xs: list<a>, ε p: (ε x: a) -> bool) -> list<a>
       else xx.filter(p)
 ```
 
-We see parameters in Boo are annotated with one of two _quantities_:
+We see parameters in System B are annotated with one of two _quantities_:
 1 for owned (affine linear) usage, and
 ε for borrowed (non-escaping) usage.
 In our example, `xs` is _owned_, and thus restricted to be used exactly once or not at all.
@@ -153,7 +151,7 @@ The borrowing block `{x| p(x) }` on line~4,
 turns binding `x` from owned into borrowed during the evaluation of the expression `p(x)`.
 Now `p` can take `x` as a borrowed parameter.
 
-By allowing higher-order functions in Boo,
+By allowing higher-order functions in System B,
 we need to take special care of the available bindings when constructing closures.
 Say, we write the following code filtering a list for multiples of 3:
 ```koka
@@ -175,27 +173,27 @@ there is no stratification of linear and non-linear types.
 Every type can be owned, and therefore be mutated in-place, or borrowed.
 Also, as borrowed values cannot escape their scope, they coincide with being second class.
 
-In the remaining of this paper, we dive into the Boo language and its properties.
+In the remaining of this paper, we dive into the System B language and its properties.
 We present:
 
-- the language Boo, a small functional programming language with quantity annotations on binders;
-- a bidirectional type system for Boo keeping track of these quantities, combining affine linear types with borrowing, mechanised in Agda; //of its soundness [and completeness];
-- a small-step operational semantics for Boo, showing all allocations can be done on the stack;
-- an extension of Boo with the notion of _shared_ binders, called Boos.
+- the language System B, a small functional programming language with quantity annotations on binders;
+- a bidirectional type system for System B keeping track of these quantities, combining affine linear types with borrowing, mechanised in Agda; //of its soundness [and completeness];
+- a small-step operational semantics for System B, showing all allocations can be done on the stack;
+- an extension of System B with the notion of _shared_ binders, called System Bs.
 
 ==== Organisation
 
 The remaining of this paper is structured as follows.
-In the next section, @examples, we show motivating examples of Boo,
+In the next section, @examples, we show motivating examples of System B,
 discussing the implications of our design.
-Thereafter, we formalise the syntax and semantics of Boo in @theory.
-Section @metatheory contains metatheoretical properties of Boo.
+Thereafter, we formalise the syntax and semantics of System B in @theory.
+Section @metatheory contains metatheoretical properties of System B.
 After discussing related work in @related-work,
 we conclude and present future work in @conclusion.
 
 = Examples <examples>
 
-In this section we discuss some examples to showcase the features of Boo.
+In this section we discuss some examples to showcase the features of System B.
 
 == Notation
 
@@ -394,7 +392,7 @@ fn retain_mut : (&mut Vec<a>, f: FnMut(&mut a) -> bool) -> () {...}
 
 = Language and semantics <theory>
 
-#figure(caption: [Synthesizing type rules for Boo])[$
+#figure(caption: [Synthesizing type rules for System B])[$
   framed(synthesize(
     below(Gamma, arrow.t),
     below(e, arrow.t),
@@ -402,20 +400,25 @@ fn retain_mut : (&mut Vec<a>, f: FnMut(&mut a) -> bool) -> () {...}
     below(tau, arrow.b),
     below(Gamma', arrow.b)
   )) \
+  \ bold("Variables") \
   judgements.var.one wide
-  judgements.bind.one \
-  judgements.var.epsilon wide
+  judgements.var.mu \
+  judgements.var.weak \
   judgements.borrow.one.one \
-  judgements.abs.epsilon.one \
-  judgements.abs.one.one \
-  judgements.app.lambda.one \
-  // judgements.app.lambda.uncurried \
+  judgements.bind.one \
+  \ bold("Functions") \
+  judgements.abs.epsilon.uncurried \
+  judgements.abs.one.uncurried \
+  judgements.abs.omega.uncurried \
+  judgements.app.lambda.uncurried \
+  judgements.app.omega.uncurried \
+  \ bold("Datatypes") \
   judgements.construct.one \
   // judgements.construct.uncurried \
   judgements.match.uncurried \
 $]
 
-// #figure(caption: [Checking type rules for Boo])[$
+// #figure(caption: [Checking type rules for System B])[$
 //   framed(check(
 //     below(Gamma, arrow.t),
 //     below(many(e, n), arrow.t),
@@ -425,7 +428,7 @@ $]
 //   )) \
 // $]
 
-#figure(caption: [Spine typing rules for Boo])[$
+#figure(caption: [Spine typing rules for System B])[$
   framed(synthesizes(
     below(Gamma, arrow.t),
     below(many(e, n), arrow.t),
@@ -433,7 +436,8 @@ $]
     below(many(tau, n), arrow.t),
     below(Gamma', arrow.b)
   )) \
-  judgements.spine.empty wide judgements.spine.rest \
+  judgements.spine.empty \
+  judgements.spine.rest \
 $]
 
 

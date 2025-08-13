@@ -1,16 +1,25 @@
 #import "../basic/commands.typ": *
 
-//// Setups ////
+
+//// Setups ////////////////////////////////////////////////////////////////////////////////////////
+
+#set math.lr(size: 1em) // Magic! :-D
 
 #let use-coloring = false
 
 
-//// Commands ////
+//// Quantities ////////////////////////////////////////////////////////////////////////////////////
+
+// #let qt(quant, name) = $attach(tl: quant, name)$
+#let qt(quant, name) = $quant dot name$
 
 #let quantities = $cal(Q)$
 #let lift(it) = $ceil(it)$
 #let lower(it) = $floor(it)$
 #let freeze(it) = $abs(it)$
+
+
+//// Judgements ////////////////////////////////////////////////////////////////////////////////////
 
 #let input = if use-coloring {text.with(fill: blue)} else {identity}
 #let output = if use-coloring {text.with(fill: red)} else {identity}
@@ -34,53 +43,57 @@ $
 #let with = $comma space$
 #let merge = $inter$
 
-//// Language constructs ////
 
-// #let qt(quant, name) = $attach(tl: quant, name)$
-#let qt(quant, name) = $quant dot name$
+//// Declarations //////////////////////////////////////////////////////////////////////////////////
+
+#let type(name, items) = $keyword("type") space name = angle.l items angle.r$
+
+#let fun(name, pars, body, cont) = $keyword("def")space name(pars) space body; space cont$
+#let val(quant, names, body, cont) = $keyword("let")^quant space names = body; space cont$
+
+//// Expressions ///////////////////////////////////////////////////////////////////////////////////
+
 #let arg(name, quant, type) = $qt(quant, name) : type$
 
-#let fun(name, pars, body, cont) = $keyword("fun")space name\(pars\) space body; space cont$
-#let val(quant, names, body, cont) = $keyword("val")^quant space names = body; space cont$
-
-// #let borrow(args, body) = $""^args {body}$
-#let borrow(args, body) = $\{args keyword("in") body\}$
-// #let fn(pars, body) = $|pars| space body$
-#let fn(pars, body) = $keyword("fn")\(pars\) space body$
-
-
-
-
+// #let bor(args, body) = $""^args {body}$
+// #let bor(args, body) = $keyword("borrow") args keyword("in") body$
+#let bor(args, body) = ${args | body}$
+// #let lam(pars, body) = $|pars| space body$
+#let lam(pars, body) = $keyword("fn")(pars) space body$
+// #let lam(pars, body) = $lambda (pars) . space body$
 #let cls(vars, pars, body) = $attach(tl: vars, |pars|) space body$
-#let apply(func, args) = $func\(args\)$
+#let app(func, args) = $func(args)$
+
 #let tuple(..items) = {
   let items = items.pos().join([,])
-  $\(items\)$
+  $(items)$
 }
-#let variant(ctor, args) = $ctor\(args\)$
-#let list(items) = $\[items\]$
 #let split(quant, names, body, cont) = $keyword("split")^quant space names = body; space cont$
-#let match(quant, body, arms) = $keyword("match")^quant space body space \{arms\}$
+#let variant(ctor, args) = $ctor(args)$
+#let match(quant, body, arms) = $keyword("match")^quant space body space {arms}$
 //arms.pos().chunks(2).map(((pat, exp)) => pat |-> exp)$
 // #let fold(quant, list, accum, var1, var2, body) = $keyword("fold")^quant space list keyword("from") accum keyword("with") var1, var2 |-> body$
+#let list(items) = $[items]$
 #let fold(quant, list, accum, var1, var2, body) = $keyword("fold")^quant space list, accum, {var1, var2 |-> body}$
 #let wilt = $keyword("wilt")$
 #let bind(name, body, cont) = $keyword("with") space name space <- body; space cont$
 
-#let function(..from, to) = {
+
+//// Types /////////////////////////////////////////////////////////////////////////////////////////
+
+#let Function(..from, to) = {
   let from = from.pos().join($, space$)
-  $\(from\) arrow to$
+  $(from) arrow to$
   // let from = from.pos().join($times$)
-  // $\(from -> to\)$
+  // $(from -> to)$
 }
-#let type(name, ..inner) = {
+#let Type(name, ..inner) = {
   let inner = inner.pos().join($, space$)
   // $name angle.l inner angle.r$
   $name(inner)$
 }
-#let List(inner) = type("List", inner)
-#let variants(..items) = {
+#let List(inner) = Type("List", inner)
+#let Variant(..items) = {
   let items = items.pos().join($,$)
-  $angle.l items angle.r$
+  $[ items ]$
 }
-#let type(name, items) = $keyword("type") space name = angle.l items angle.r$
