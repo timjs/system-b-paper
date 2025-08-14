@@ -3,8 +3,6 @@
 
 //// Setups ////////////////////////////////////////////////////////////////////////////////////////
 
-#set math.lr(size: 1em) // Magic! :-D
-
 #let use-coloring = false
 
 
@@ -57,11 +55,11 @@ $
 
 // #let bor(args, body) = $""^args {body}$
 // #let bor(args, body) = $keyword("borrow") args keyword("in") body$
-#let bor(args, body) = ${args | body}$
-// #let lam(pars, body) = $|pars| space body$
-#let lam(pars, body) = $keyword("fn")(pars) space body$
-// #let lam(pars, body) = $lambda (pars) . space body$
-#let cls(vars, pars, body) = $attach(tl: vars, |pars|) space body$
+#let bor(args, body) = ${args | body space}$
+#let absa(vars, pars, body) = $keyword("fn")^vars (pars) space body$
+// #let abs(pars, body) = $|pars| space body$
+// #let abs(pars, body) = $lambda (pars) . space body$
+#let abs(pars, body) = absa("", pars, body)
 #let app(func, args) = $func(args)$
 
 #let tuple(..items) = {

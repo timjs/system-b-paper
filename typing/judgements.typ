@@ -1,5 +1,5 @@
 #import "/basic/commands.typ": *
-#import "definitions.typ": judgement, synthesize, with, more, bor, lift, tuple, each, many, merge, wilt, freeze, fun, arg, qt, lookup, variant, app, val, match, lam, split, Function, synthesizes, empty
+#import "definitions.typ": judgement, synthesize, with, more, bor, lift, tuple, each, many, merge, wilt, freeze, fun, arg, qt, lookup, variant, app, val, match, abs, split, Function, synthesizes, empty
 
 #let judgements = (
 
@@ -90,7 +90,7 @@
 
   // judgement("Abs",
   //   synthesize(Gamma_0^nu with many(arg(x, q, tau), n), e_0, lift(q), tau_0, Gamma_1),
-  //   synthesize(Gamma_0^epsilon with Gamma_0^nu, lam(many(arg(x, q, tau), n), e_0), q, //     Function(many(tau^q, n), tau_0), Gamma_0^epsilon with Gamma_1 without many(x, n)),
+  //   synthesize(Gamma_0^epsilon with Gamma_0^nu, abs(many(arg(x, q, tau), n), e_0), q, //     Function(many(tau^q, n), tau_0), Gamma_0^epsilon with Gamma_1 without many(x, n)),
   // )
 
   abs: (
@@ -98,19 +98,19 @@
       curried: $
         judgement("Abs"_epsilon,
           synthesize(Gamma_0^epsilon with Gamma_0^omega with arg(x_1, q_1, tau_1), e_0, 1, tau_0, Gamma_1),
-          synthesize(Gamma_0, lam(arg(x_1, q_1, tau_1), e_0), epsilon, Function(qt(q_1, tau_1), tau_0), Gamma_0^1 union Gamma_1 without x_1),
+          synthesize(Gamma_0, abs(arg(x_1, q_1, tau_1), e_0), epsilon, Function(qt(q_1, tau_1), tau_0), Gamma_0^1 union Gamma_1 without x_1),
         )
       $,
       uncurried: $
         judgement("Abs"_epsilon,
           synthesize(Gamma_0^epsilon with Gamma_0^omega with many(arg(x, q, tau), n), e_0, 1, tau_0, Gamma_1),
-          synthesize(Gamma_0, lam(many(arg(x, q, tau), n), e_0), epsilon, Function(many(qt(q, tau), n), tau_0), Gamma_0^1 union Gamma_1 without many(x, n)),
+          synthesize(Gamma_0, abs(many(arg(x, q, tau), n), e_0), epsilon, Function(many(qt(q, tau), n), tau_0), Gamma_0^1 union Gamma_1 without many(x, n)),
         )
       $,
       one: $
         judgement("Abs"_epsilon,
           synthesize(Gamma_0^epsilon with many(arg(x, q, tau), n), e_0, 1, tau_0, Gamma_1),
-          synthesize(Gamma_0, lam(many(arg(x, q, tau), n), e_0), epsilon, Function(many(qt(q, tau), n), tau_0), Gamma_0^1 union Gamma_1 without many(x, n)),
+          synthesize(Gamma_0, abs(many(arg(x, q, tau), n), e_0), epsilon, Function(many(qt(q, tau), n), tau_0), Gamma_0^1 union Gamma_1 without many(x, n)),
         )
       $,
     ),
@@ -118,19 +118,19 @@
       curried: $
         judgement("Abs"_1,
           synthesize(Gamma_0^1 with Gamma_0^omega with arg(x_1, q_1, tau_1), e_0, 1, tau_0, Gamma_1),
-          synthesize(Gamma_0, lam(arg(x_1, q_1, tau_1), e_0), 1, Function(qt(q_1, tau_1), tau_0), Gamma_0^epsilon union Gamma_1 without x_1),
+          synthesize(Gamma_0, abs(arg(x_1, q_1, tau_1), e_0), 1, Function(qt(q_1, tau_1), tau_0), Gamma_0^epsilon union Gamma_1 without x_1),
         )
       $,
       uncurried: $
         judgement("Abs"_1,
           synthesize(Gamma_0^1 with Gamma_0^omega with many(arg(x, q, tau), n), e_0, 1, tau_0, Gamma_1),
-          synthesize(Gamma_0, lam(many(arg(x, q, tau), n), e_0), 1, Function(many(qt(q, tau), n), tau_0), Gamma_0^epsilon union Gamma_1 without many(x, n)),
+          synthesize(Gamma_0, abs(many(arg(x, q, tau), n), e_0), 1, Function(many(qt(q, tau), n), tau_0), Gamma_0^epsilon union Gamma_1 without many(x, n)),
         )
       $,
       one: $
         judgement("Abs"_1,
           synthesize(Gamma_0^1 with many(arg(x, q, tau), n), e_0, 1, tau_0, Gamma_1),
-          synthesize(Gamma_0, lam(many(arg(x, q, tau), n), e_0), 1, Function(many(qt(q, tau), n), tau_0), Gamma_0^epsilon union Gamma_1 without many(x, n)),
+          synthesize(Gamma_0, abs(many(arg(x, q, tau), n), e_0), 1, Function(many(qt(q, tau), n), tau_0), Gamma_0^epsilon union Gamma_1 without many(x, n)),
         )
       $,
     ),
@@ -138,13 +138,13 @@
       curried: $
         judgement("Abs"_omega,
           synthesize(Gamma_0^omega with arg(x_1, q_1, tau_1), e_0, 1, tau_0, Gamma_1),
-          synthesize(Gamma_0, lam(arg(x_1, q_1, tau_1), e_0), omega, Function(qt(q_1, tau_1), tau_0), Gamma_0^epsilon with Gamma_0^1 union Gamma_1 without x_1),
+          synthesize(Gamma_0, abs(arg(x_1, q_1, tau_1), e_0), omega, Function(qt(q_1, tau_1), tau_0), Gamma_0^epsilon with Gamma_0^1 union Gamma_1 without x_1),
         )
       $,
       uncurried: $
         judgement("Abs"_omega,
           synthesize(Gamma_0^omega with many(arg(x, q, tau), n), e_0, 1, tau_0, Gamma_1),
-          synthesize(Gamma_0, lam(many(arg(x, q, tau), n), e_0), omega, Function(many(qt(q, tau), n), tau_0), Gamma_0^epsilon union Gamma_0^1 with Gamma_1 without many(x, n)),
+          synthesize(Gamma_0, abs(many(arg(x, q, tau), n), e_0), omega, Function(many(qt(q, tau), n), tau_0), Gamma_0^epsilon union Gamma_0^1 with Gamma_1 without many(x, n)),
         )
       $,
     ),

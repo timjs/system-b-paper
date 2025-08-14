@@ -25,9 +25,12 @@
   acmJournal: "JACM",
 )
 #show: setups.init
+#show: setups.libertinus
 #show: logos.init
 
 #show heading.where(level: 4).or(heading.where(level: 5)): set heading(numbering: none)
+#set math.lr(size: 1em) // Magic! :-D
+#set table(stroke: none)
 
 
 = Introduction
@@ -63,7 +66,42 @@ However, as we will see shortly, full linear systems make it hard to program in 
 // Other languages, like Clean @plasmeijer2002clean and Rust @klabnik2023rust, combine uniqueness types or affine types with shared types
 // for ensured in-place updates or unique state threading.
 
-== Motivation
+// == Motivation
+...
+
+== Contributions
+The combination of linear types and borrowing is a promising approach
+to incorporate functional programming techniques like higher-order functions and immutable data types
+into systems programming.
+By annotating binders instead of types,
+there is no stratification of linear and non-linear types.
+Every type can be owned, and therefore be mutated in-place, or borrowed.
+Also, as borrowed values cannot escape their scope, they coincide with being second class.
+
+In the remaining of this paper, we dive into the System B language and its properties.
+We present:
+
+- the language System B, a small functional programming language with quantity annotations on binders;
+- a bidirectional type system for System B keeping track of these quantities, combining affine linear types with borrowing, mechanised in Agda; //of its soundness [and completeness];
+- a small-step operational semantics for System B, showing all allocations can be done on the stack;
+- an extension of System B with the notion of _shared_ binders, called System Bs.
+
+==== Organisation
+
+The remaining of this paper is structured as follows.
+In the next section, @examples, we show motivating examples of System B,
+discussing the implications of our design.
+Thereafter, we formalise the syntax and semantics of System B in @theory.
+Section @metatheory contains metatheoretical properties of System B.
+After discussing related work in @related-work,
+we conclude and present future work in @conclusion.
+
+= Examples <examples>
+
+In this section we discuss some examples to showcase the features of System B.
+
+== Haskell example
+
 Take as an example below implementation to filter lists in Haskell:
 ```haskell
 filter p xs = case xs of
@@ -123,7 +161,8 @@ On the language level, this is not a problem,
 but on the implementation level this sneaks in the need for garbage collection.
 Exactly this is what we hoped to prevent!
 
-== Solution
+=== Solution
+
 We propose a solution where we do not need mixing of owned and shared types.
 Instead, we allow _borrowing_ of owned _bindings_.
 We introduce System B, a small functional programming language with quantity annotations on binders.
@@ -163,51 +202,6 @@ val 1 ys = xs.filter(fn(x) x % m == 0)
 The lambda on line~3 closes of variable `m` from its outer scope.
 As `filter` asks for a borrowed function,
 we allow the construction of a borrowed lambda closing over borrowed variables.
-
-== Contributions
-The combination of linear types and borrowing is a promising approach
-to incorporate functional programming techniques like higher-order functions and immutable data types
-into systems programming.
-By annotating binders instead of types,
-there is no stratification of linear and non-linear types.
-Every type can be owned, and therefore be mutated in-place, or borrowed.
-Also, as borrowed values cannot escape their scope, they coincide with being second class.
-
-In the remaining of this paper, we dive into the System B language and its properties.
-We present:
-
-- the language System B, a small functional programming language with quantity annotations on binders;
-- a bidirectional type system for System B keeping track of these quantities, combining affine linear types with borrowing, mechanised in Agda; //of its soundness [and completeness];
-- a small-step operational semantics for System B, showing all allocations can be done on the stack;
-- an extension of System B with the notion of _shared_ binders, called System Bs.
-
-==== Organisation
-
-The remaining of this paper is structured as follows.
-In the next section, @examples, we show motivating examples of System B,
-discussing the implications of our design.
-Thereafter, we formalise the syntax and semantics of System B in @theory.
-Section @metatheory contains metatheoretical properties of System B.
-After discussing related work in @related-work,
-we conclude and present future work in @conclusion.
-
-= Examples <examples>
-
-In this section we discuss some examples to showcase the features of System B.
-
-== Notation
-
-#set math.lr(size: 1em) // Magic! :-D
-// #show math.upright: text
-
-$
-   x_0.f(many(x, n))                      &~> f(x_0, many(x,n)) \
-   "if" e_0 "then" e_1 "else" e_2         &~> "match" e_0 space { "True" |-> e_1, "False" |-> e_2} \
-   "when" { e_0 |-> e_1; "else" |-> e_2 } &~> "match" e_0 space { "True" |-> e_1, "False" |-> e_2} \
-   "with" x_0 <- f(many(e, n)); e_0       &~> f(many(e, n), |x_0| e_0) \
-  //  "when" { many(p |-> e, n) "else" |-> e_(n+1) } &~> "match" p_1 space { "True" |-> e_1; "False" |-> "match" p_2 space { "True" |-> e_2; "False" |-> ... }} \
-$
-
 == Simple owning and sharing functions
 
 When returning a value $v$ from a function, there can be several cases.
@@ -392,6 +386,72 @@ fn retain_mut : (&mut Vec<a>, f: FnMut(&mut a) -> bool) -> () {...}
 
 = Language and semantics <theory>
 
+== Notation
+
+// #show math.upright: text
+
+$
+   x_0.f(many(x, n))                      &~> f(x_0, many(x,n)) \
+   "if" e_0 "then" e_1 "else" e_2         &~> "match" e_0 space { "True" |-> e_1, "False" |-> e_2} \
+   "when" { e_0 |-> e_1; "else" |-> e_2 } &~> "match" e_0 space { "True" |-> e_1, "False" |-> e_2} \
+   "with" x_0 <- f(many(e, n)); e_0       &~> f(many(e, n), |x_0| e_0) \
+  //  "when" { many(p |-> e, n) "else" |-> e_(n+1) } &~> "match" p_1 space { "True" |-> e_1; "False" |-> "match" p_2 space { "True" |-> e_2; "False" |-> ... }} \
+$
+
+== Language
+
+We write:\
+  - $many(x, n)$ for an _ordered_ set of $x$es of length $n$, so $x_1, ..., x_n$;
+  - $more(x)$ for an _unordered, possibly empty_ set of $x$es;
+  - $most(x)$ for an _unordered, non-empty_ set of $x$es;
+  - $maybe(x)$ for an _optional_ $x$.
+
+#figure(caption: [Syntax for System B])[$
+  // grammar("Modules", m,
+  //   more(d)\; e, "main"
+  // ) \
+  // grammar("Declarations", d,
+  //   type(X, many(C^n (many(tau, n)), m)), "types",
+  // ) \
+
+  grammarshort("Expressions", e,
+    x, "variable",
+    val(q_0, x_0, e_0, e), "bind",
+    bor(more(x), e), "borrow",
+    abs(many(arg(x, q, tau), n), e_0), "abstract",
+    app(e_0, many(e, n)), "apply",
+    variant(C, many(e, n)), "construct",
+    match(q_0, e_0, many(variant(C, many(x, n)) -> e, m)), "match",
+  ) \
+  grammarshort("Values", v,
+    absa(more(z), many(arg(x, q, tau), n), e_0), "abstraction",
+    variant(C, many(v, n)), "variant",
+  ) \
+  // grammar("Basic values", b,
+  //   tuple(many(b, n)), "tuple",
+  //   variant(C, many(b, n)), "variant",
+  //   ) \
+$]
+// #footnote[Note we have $b subset v subset e$]
+
+#figure(caption: [Type syntax for System B])[$
+  grammarshort("Types", tau,
+    phi, "function type",
+    Variant(many(variant(C, many(tau, n)), m)), "sum type",
+    // List(tau), "list",
+  ) \
+  grammarshort("Function types", phi,
+    Function(many(qt(q, tau), n), tau_0), "function type",
+  ) \
+  grammarshort("Quantities", q,
+    epsilon, "borrowed",
+    1, "linear",
+    omega, "unrestricted",
+  ) \
+$]
+
+== Typing rules
+
 #figure(caption: [Synthesizing type rules for System B])[$
   framed(synthesize(
     below(Gamma, arrow.t),
@@ -441,9 +501,9 @@ $]
 $]
 
 
-= Adding unrestrictedness
-
 = Guarantees <metatheory>
+
+= Implementation <implementation>
 
 = Related work <related-work>
 
