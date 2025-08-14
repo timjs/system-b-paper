@@ -6,7 +6,7 @@
 
 #show: template.acmart.with(
   format: "acmsmall",
-  title: [System B! Borrowing isn't scarry, it's second class],
+  title: [Borrowing is second class],
   authors: (
     (
       name: "Tim Steenvoorden",
