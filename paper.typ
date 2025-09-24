@@ -51,24 +51,26 @@ These stricter disciplines can also lead to code duplication.
 Then logically identical functionality must be expressed in multiple forms to accommodate different ownership or allocation requirements.
 This duplication increases code size and reduces maintainability.
 
-This work proposes a type system that classifies bindings into three ownership modes: _borrowed_, _consumed_, and _shared_.
+This work proposes a type system that classifies bindings into three ownership modes: _borrowed_, _owned_, and _shared_.
 Borrowed bindings cannot escape their scope:
 ownership remains with the caller, and no #rephrase[runtime ownership tracking] is required.
-Consumed bindings must be used at most once,
+Owned bindings must be used at most once,
 enabling reuse of memory when unique ownership can be confirmed at runtime.
 Shared bindings have unrestricted usage and may be freely returned or stored.
 
 By distinguishing these ownership modes,
 the type system enables both safety and flexibility:
-it supports higher-order reasoning about ownership,
-allows the compiler to generate multiple optimized implementations from a single function body,
-and facilitates efficient resource reuse when possible.
+- it supports higher-order reasoning about ownership,
+- allows the compiler to generate multiple optimized implementations from a single function body,
+- and facilitates efficient resource reuse when possible.
 Furthermore, when a non-escaping value has statically known size,
 the compiler can automatically allocate it on the stack, avoiding heap allocation entirely.
 
 == Languages on the axes
 
-The two-axis framework for reasoning about safe memory management can be illustrated
+[TS: Nog wat inkorten]
+
+Our two-axis framework for reasoning about safe memory management can be illustrated
 by positioning existing programming languages according to their efficiency and polymorphism characteristics.
 
 On the efficiency axis, fully garbage-collected languages such as Haskell or OCaml sit toward the lower end:
@@ -85,7 +87,7 @@ The polymorphism axis reflects a language’s ability to abstract over memory ma
 #rephrase[Languages like Clean exhibit low polymorphism in this respect:
   programmers must write separate functions for uniquely owned data and for shared data.]
 Rust, while offering more flexibility, still requires distinct function signatures and implementations for different allocation strategies –
-stack versus heap allocation, boxed versus reference-counted values, atomic reference counting, copy-on-write types, and so on.
+stack versus heap allocation, boxed versus reference-counted values versus atomic reference counting, copy-on-write types, and so on.
 This lack of polymorphism forces developers to duplicate logically identical code across ownership and allocation variations,
 increasing maintenance effort.
 
@@ -94,14 +96,38 @@ It employs reference counting to ensure deterministic and precise reclamation of
 When a value is no longer reachable, it is freed immediately.
 A sophisticated static analysis [cite Perseus] minimizes the cost of reference count adjustments,
 and runtime support allows reuse of uniquely owned memory cells, reducing allocation churn.
-Koka’s existing type system can reason about first-order borrowed and consumed parameters,
+Koka’s existing type system can reason about first-order borrowed and owned parameters,
 enabling some degree of polymorphism, but falls short when it comes to higher-order parameters.
 
-The type system proposed in this work extends Koka’s capabilities to reason about borrowed, consumed, and shared bindings for higher-order functions.
+The type system proposed in this work extends Koka’s capabilities to reason about borrowed, owned, and shared bindings for higher-order functions.
 This enables multiple optimized implementations to be generated from a single function definition,
 bridging part of the gap toward the high-polymorphism end of the axis without sacrificing efficiency.
 In particular, it allows stack allocation for non-escaping values of known size,
 and safe reuse of memory when unique ownership can be established at runtime.
+
+#pagebreak()
+
+=== Shorter
+
+The two-axis framework for safe memory management can be illustrated by placing existing languages along the efficiency and polymorphism dimensions.
+
+On the efficiency axis, fully garbage-collected languages such as Haskell or OCaml sit near the lower end:
+they ensure safety but incur runtime costs from stop-the-world pauses, heap traversals, and large memory footprints.
+At the opposite end, C and Zig achieve minimal overhead but provide no safety guarantees.
+Among safe languages, Rust, Cogent, and Clean approach the high-efficiency end, using strict ownership and lifetime rules to minimize runtime cost—though this strictness often limits flexibility.
+
+On the polymorphism axis, Clean requires separate function versions for uniquely owned versus shared data.
+Rust offers more flexibility but still demands different function signatures and implementations for various allocation strategies
+(e.g., stack, heap, boxed, reference-counted, atomic, copy-on-write).
+This leads to code duplication when the same logic must be adapted for different memory modes.
+
+Koka lies between the extremes on both axes.
+It uses reference counting for deterministic reclamation,
+with static analysis [cite Perseus] to reduce counting overhead and runtime reuse of uniquely owned cells to cut allocations.
+Its current type system supports first-order borrowed and owned parameters;
+the type system proposed here extends this to higher-order parameters and introduces explicit borrowed, owned, and shared modes.
+This allows the compiler to generate optimized implementations from a single function body and to automatically allocate non-escaping, sized values on the stack.
+
 
 = Old introduction
 
@@ -188,7 +214,7 @@ filter :: (a -* Bool) -* List a -* List a   -- Wrong!
 Here we use the lollipop arrow `-*` instead of to the normal `->` arrow
 to state that all parameters, `p` and `xs` in this case, are linear:
 they are restricted to be used exactly once.
-The pattern match on `xs` consumes the value, and makes the head `x` and tail `xx` also linearly available.
+The pattern match on `xs` owns the value, and makes the head `x` and tail `xx` also linearly available.
 
 Now we immediately see a problem:
 `p` needs to be applied to each element of the list and also be threaded through all calls to `filter`.
@@ -203,7 +229,7 @@ Now, `p` itself is unrestricted but still takes a linear argument.
 This raises another problem.
 On line~1, `xs` is matched linearly.
 This means `x` and `xx` on line~3 are linear as well.
-Therefore, the call `p x` on line~3 consumes `x`,
+Therefore, the call `p x` on line~3 owns `x`,
 so we cannot use it any more in case we want to keep the element on line~4.
 To solve this, we can make `p` unrestricted in its first parameter, yielding:
 ```haskell
@@ -277,15 +303,25 @@ we allow the construction of a borrowed lambda closing over borrowed variables.
 When returning a value $v$ from a function, there can be several cases.
 Value $v$ is:
 
-1.  a primitive value $p$; <case-prim>
-2.  a compound value, where $v$: <case-comp>
-    1.  has a _statically known_ size; <case-comp-stc>
-    2.  is _dynamically_ sized; <case-comp-dyn>
-3.  a reference to another value, so actually a location $l$, where $v$: <case-ref>
-    1.  is allocated on the _heap_; <case-ref-heap>
-    2.  is allocated on the _stack_: <case-ref-stack>
-        1.  in the _caller's_ stack frame or even before that; <case-ref-stack-caller>
-        2.  in the _callee's_ stack frame. <case-ref-stack-callee>
+1.
+ a primitive value $p$; <case-prim>
+2.
+ a compound value, where $v$: <case-comp>
+    1.
+ has a _statically known_ size; <case-comp-stc>
+    2.
+ is _dynamically_ sized; <case-comp-dyn>
+3.
+ a reference to another value, so actually a location $l$, where $v$: <case-ref>
+    1.
+ is allocated on the _heap_; <case-ref-heap>
+    2.
+ is allocated on the _stack_: <case-ref-stack>
+        1.
+ in the _caller's_ stack frame or even before that; <case-ref-stack-caller>
+        2.
+ in the _callee's_ stack frame.
+<case-ref-stack-callee>
 
 @case-prim is the easiest case.
 As primitives are word-sized, they can simply be returned in a register.
@@ -465,7 +501,8 @@ $
    "if" e_0 "then" e_1 "else" e_2         &~> "match" e_0 space { "True" |-> e_1, "False" |-> e_2} \
    "when" { e_0 |-> e_1; "else" |-> e_2 } &~> "match" e_0 space { "True" |-> e_1, "False" |-> e_2} \
    "with" x_0 <- f(many(e, n)); e_0       &~> f(many(e, n), |x_0| e_0) \
-  //  "when" { many(p |-> e, n) "else" |-> e_(n+1) } &~> "match" p_1 space { "True" |-> e_1; "False" |-> "match" p_2 space { "True" |-> e_2; "False" |-> ... }} \
+  //  "when" { many(p |-> e, n) "else" |-> e_(n+1) } &~> "match" p_1 space { "True" |-> e_1; "False" |-> "match" p_2 space { "True" |-> e_2; "False" |-> ...
+}} \
 $
 
 == Language
