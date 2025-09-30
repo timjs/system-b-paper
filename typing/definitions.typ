@@ -37,9 +37,10 @@ $
   input(contextIn) space meta(forces) space input(quantities) space meta(dot) space input(expressions) space meta(:) space output(types) space meta(#rotate(180deg, forces)) space output(contextOut)
 $
 
-// #let with = math.dot
-#let with = $comma space$
-#let merge = $inter$
+#let div = $slash$
+#let with = $space union space$ //$comma space$
+#let without = $-$
+#let merge = $ inter $
 
 
 //// Declarations //////////////////////////////////////////////////////////////////////////////////

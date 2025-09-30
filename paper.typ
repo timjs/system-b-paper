@@ -521,7 +521,7 @@ We write:\
   //   type(X, many(C^n (many(tau, n)), m)), "types",
   // ) \
 
-  grammarshort("Expressions", e,
+  grammar("Expressions", e,
     x, "variable",
     val(q_0, x_0, e_0, e), "bind",
     bor(more(x), e), "borrow",
@@ -530,7 +530,7 @@ We write:\
     variant(C, many(e, n)), "construct",
     match(q_0, e_0, many(variant(C, many(x, n)) -> e, m)), "match",
   ) \
-  grammarshort("Values", v,
+  grammar("Values", v,
     absa(more(z), many(arg(x, q, tau), n), e_0), "abstraction",
     variant(C, many(v, n)), "variant",
   ) \
@@ -555,6 +555,7 @@ $]
     1, "linear",
     omega, "unrestricted",
   ) \
+  "add typing context" \
 $]
 
 == Typing rules
