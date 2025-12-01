@@ -23,8 +23,8 @@
   abstract: include "sections/abstract.typ",
   acmJournal: "JACM",
 )
+#show: setups.libertinus
 #show: setups.init
-// #show: setups.libertinus
 #show: logos.init
 
 #show heading.where(level: 4).or(heading.where(level: 5)): set heading(numbering: none)
