@@ -69,7 +69,7 @@ $
 }
 #let split(quant, names, body, cont) = $keyword("split")^quant space names = body; space cont$
 #let variant(ctor, args) = $ctor(args)$
-#let match(quant, body, arms) = $keyword("match")^quant space body space {arms}$
+#let case(quant, body, arms) = $keyword("case")^quant space body space {arms}$
 //arms.pos().chunks(2).map(((pat, exp)) => pat |-> exp)$
 // #let fold(quant, list, accum, var1, var2, body) = $keyword("fold")^quant space list keyword("from") accum keyword("with") var1, var2 |-> body$
 #let list(items) = $[items]$

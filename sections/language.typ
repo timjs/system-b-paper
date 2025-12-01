@@ -11,10 +11,10 @@
 
 $
    x_0.f(many(x, n))                      &~> f(x_0, many(x,n)) \
-   "if" e_0 "then" e_1 "else" e_2         &~> "match" e_0 space { "True" |-> e_1, "False" |-> e_2} \
-   "when" { e_0 |-> e_1; "else" |-> e_2 } &~> "match" e_0 space { "True" |-> e_1, "False" |-> e_2} \
+   "if" e_0 "then" e_1 "else" e_2         &~> "case" e_0 space { "True" |-> e_1, "False" |-> e_2} \
+   "when" { e_0 |-> e_1; "else" |-> e_2 } &~> "case" e_0 space { "True" |-> e_1, "False" |-> e_2} \
    "with" x_0 <- f(many(e, n)); e_0       &~> f(many(e, n), |x_0| e_0) \
-  //  "when" { many(p |-> e, n) "else" |-> e_(n+1) } &~> "match" p_1 space { "True" |-> e_1; "False" |-> "match" p_2 space { "True" |-> e_2; "False" |-> ...
+  //  "when" { many(p |-> e, n) "else" |-> e_(n+1) } &~> "case" p_1 space { "True" |-> e_1; "False" |-> "case" p_2 space { "True" |-> e_2; "False" |-> ...
 }} \
 $
 
@@ -41,7 +41,7 @@ We write:\
     abs(many(arg(x, q, tau), n), e_0), "abstract",
     app(e_0, many(e, n)), "apply",
     variant(C, many(e, n)), "construct",
-    match(q_0, e_0, many(variant(C, many(x, n)) -> e, m)), "match",
+    case(q_0, e_0, many(variant(C, many(x, n)) -> e, m)), "case",
   ) \
   grammar("Values", v,
     absa(more(z), many(arg(x, q, tau), n), e_0), "abstraction",
@@ -96,7 +96,7 @@ $]
   \ bold("Datatypes") \
   judgements.construct.one \
   // judgements.construct.uncurried \
-  judgements.match.uncurried \
+  judgements.case.uncurried \
 $]
 
 // #figure(caption: [Checking type rules for System B])[$

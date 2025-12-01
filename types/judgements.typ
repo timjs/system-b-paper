@@ -1,5 +1,5 @@
 #import "/lib/basic/commands.typ": *
-#import "definitions.typ": judgement, synthesize, div, with, without, more, bor, lift, tuple, each, many, merge, wilt, freeze, fun, arg, qt, lookup, variant, app, val, match, abs, split, Function, synthesizes, empty
+#import "definitions.typ": judgement, synthesize, div, with, without, more, bor, lift, tuple, each, many, merge, wilt, freeze, fun, arg, qt, lookup, variant, app, val, case, abs, split, Function, synthesizes, empty
 
 #let judgements = (
 
@@ -287,18 +287,18 @@
       )
     $,
   ),
-  match: (
+  case: (
     curried: $
-      judgement("Mat",
+      judgement("Decon",
         synthesize(Gamma_0, e_0, q_0, tau_0, Gamma'_0),
         each(i in 1..2),
         lookup(Delta, C_i, Function(tau_i, tau_0)),
         synthesize(Gamma'_0 with arg(x_i, q_0, tau_i), e_i, q, tau, Gamma_i),
-        synthesize(Gamma_0, match(q_0, e_0, many(variant(C, x) |-> e, 2)), q, tau, Gamma_1 merge Gamma_2),
+        synthesize(Gamma_0, case(q_0, e_0, many(variant(C, x) |-> e, 2)), q, tau, Gamma_1 merge Gamma_2),
       )
     $,
     uncurried: $
-      judgement("Mat",
+      judgement("Decon",
         stacking(
           synthesize(Gamma_0, e_0, q_0, tau_0, Gamma'_0),
           spreading(
@@ -308,7 +308,7 @@
             tau_i equiv tau,
           ),
         ),
-        synthesize(Gamma_0, match(q_0, e_0, many(variant(C, many(x, n)) |-> e, m)), q, tau, merge_(i in 1..m) Gamma_i),
+        synthesize(Gamma_0, case(q_0, e_0, many(variant(C, many(x, n)) |-> e, m)), q, tau, merge_(i in 1..m) Gamma_i),
         // condition: "same"(many(tau, m)),
       )
     $,
@@ -347,5 +347,5 @@
   //   synthesize(Gamma_0, e_0, q_0, variants(many(tau_i, 2)), Gamma'_0),
   //   each(i in 1..2),
   //   synthesize(Gamma'_0 with arg(x_i, q_0, tau_i), e_i, q, tau, Gamma_i),
-  //   synthesize(Gamma_0, match(q_0, e_0, many(variant(C, x) |-> e, 2)), q, tau, Gamma_1 without x_1 merge Gamma_2 without x_2),
+  //   synthesize(Gamma_0, case(q_0, e_0, many(variant(C, x) |-> e, 2)), q, tau, Gamma_1 without x_1 merge Gamma_2 without x_2),
   // )
