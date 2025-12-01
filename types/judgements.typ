@@ -1,4 +1,4 @@
-#import "/basic/commands.typ": *
+#import "/lib/basic/commands.typ": *
 #import "definitions.typ": judgement, synthesize, div, with, without, more, bor, lift, tuple, each, many, merge, wilt, freeze, fun, arg, qt, lookup, variant, app, val, match, abs, split, Function, synthesizes, empty
 
 #let judgements = (
