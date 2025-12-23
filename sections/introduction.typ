@@ -123,6 +123,10 @@ and safe reuse of memory when unique ownership can be established at runtime.
   ]
 ]<fig:rust:filter-map>
 
+#figure(caption: [Placing existing languages along the efficiency and polymorphism dimensions.])[
+  #image("/figures/memory-management.pdf", width: 50%)
+]
+
 The two-axis framework for safe memory management can be illustrated by placing existing languages along the efficiency and polymorphism dimensions.
 
 On the efficiency axis, fully garbage-collected languages such as Haskell or OCaml sit near the lower end:
@@ -143,6 +147,7 @@ with static analysis to reduce counting overhead and runtime reuse of uniquely o
 Its current type system supports first-order borrowed and consumed parameters;
 the type system proposed here extends this to higher-order parameters and introduces explicit borrowed, consumed, and shared modes.
 This allows the compiler to generate optimized implementations from a single function body and to automatically allocate non-escaping, sized values on the stack.
+
 
 == Contributions
 
