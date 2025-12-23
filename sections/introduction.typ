@@ -1,6 +1,9 @@
-#import "/lib/basic/commands.typ": rephrase
+#import "/lib/basic/bricks.typ": *
+#import "/lib/basic/commands.typ": *
 
 = Introduction
+
+#draft[(Add more intro.)]
 
 We describe the design space for safe memory management in programming languages along two orthogonal axes: _efficiency_ and _polymorphism_.
 
@@ -21,7 +24,7 @@ This duplication increases code size and reduces maintainability.
 
 This work proposes a type system that classifies bindings into three ownership modes: _borrowed_, _consumed_, and _shared_.
 Borrowed bindings cannot escape their scope:
-ownership remains with the caller, and no #rephrase[runtime ownership tracking] is required.
+ownership remains with the caller, and no #draft[runtime ownership tracking] is required.
 Owned bindings must be used at most once,
 enabling reuse of memory when unique ownership can be confirmed at runtime.
 Shared bindings have unrestricted usage and may be freely returned or stored.
@@ -36,6 +39,7 @@ the compiler can automatically allocate it on the stack, avoiding heap allocatio
 
 == Languages on the axes
 
+/*
 [TS: Nog wat inkorten]
 
 Our two-axis framework for reasoning about safe memory management can be illustrated
@@ -72,8 +76,52 @@ This enables multiple optimized implementations to be generated from a single fu
 bridging part of the gap toward the high-polymorphism end of the axis without sacrificing efficiency.
 In particular, it allows stack allocation for non-escaping values of known size,
 and safe reuse of memory when unique ownership can be established at runtime.
+*/
 
-=== Shorter
+#listing(caption: [
+  Single linked list in Rust with two ```rust filter_map``` implementations.
+  On the left,
+    a functional interface with no sharing of the spine.
+  On the right,
+    an in-place mutating interface with possible sharing of the spine
+    by using reference counted smart pointers (```rust Rc```).
+])[
+  #side-by-side[
+    ```rust
+    pub enum List<T> {
+      Cons(T, Box<List<T>>),
+      Nil,
+    }
+
+    impl<T> List<T> {
+      fn filter_map<U>(self, f: fn(T) -> Option<U>) -> List<U> {
+        match self {
+          Nil => {}
+          Cons(x, xs) => {
+            let ys = xs.filter_map(f)
+            match f(x) {
+              Some(y) => Cons(y, Box::new(ys))
+              None => ys
+    } } } } }
+    ```
+  ][
+    ```rust
+    pub enum List<T>
+      Cons(T, Rc<List<T>>),
+      Nil,
+    }
+
+    impl<T> List<T> where T: Clone {
+      fn filter_map(&mut self, f: fn(&mut T)) {
+        match self {
+          Nil => {}
+          Cons(x, xs) => {
+            f(x);
+            Rc::make_mut(xs).filter_map(f);
+    } } } }
+    ```
+  ]
+]<fig:rust:filter-map>
 
 The two-axis framework for safe memory management can be illustrated by placing existing languages along the efficiency and polymorphism dimensions.
 
@@ -84,19 +132,45 @@ Among safe languages, Rust, Cogent, and Clean approach the high-efficiency end, 
 
 On the polymorphism axis, Clean requires separate function versions for uniquely owned versus shared data.
 Rust offers more flexibility but still demands different function signatures and implementations for various allocation strategies
-(e.g., stack, heap, boxed, reference-counted, atomic, copy-on-write).
+(e.g., stack, heap, boxed, reference-counted, atomic, copy-on-write),
+as can be seen in @fig:rust:filter-map.
 This leads to code duplication when the same logic must be adapted for different memory modes.
 
 Koka lies between the extremes on both axes.
 It uses reference counting for deterministic reclamation,
-with static analysis [cite Perseus] to reduce counting overhead and runtime reuse of uniquely owned cells to cut allocations.
+with static analysis to reduce counting overhead and runtime reuse of uniquely owned cells to cut allocations @journals-pacmpl-LorenzenL22 @journals-pacmpl-LorenzenLSL24.
+//TODO: add Perseus
 Its current type system supports first-order borrowed and consumed parameters;
 the type system proposed here extends this to higher-order parameters and introduces explicit borrowed, consumed, and shared modes.
 This allows the compiler to generate optimized implementations from a single function body and to automatically allocate non-escaping, sized values on the stack.
 
 == Contributions
 
-//TODO
+Our contributions are as follows.
+
+- We introduce System B, a calculus with quantity annotations on the binders.
+  Binders can be borrowed, owned, or shared.
+  System B supports higher-order functions and datatypes.
+- Based on the associated quantities, we reveil some properties on bindings of each quantity:
+  / Borrowed bindings: correspond to second class usage.
+    They cannot be returned from functions or saved in data structures.
+  / Owned bindings: correspond to first class linear usage.
+    When unique at runtime, the referred data can be mutated in-place.
+  / Shared bindings: correspond to first class unrestricted usage of data,
+    which is the classical [use case] in functional programming.
+- We compare our approach to existing solutions in other languages.
+- We present a bidirectional type system for System B,
+  taking care of [the properties of each binding quantity]
+  such as non-escaping, linear usage, and capturing properties for closures.
+- [We prove the induced type checking algorithm is sound and complete
+  with respect to the presented typing rules.]
+- We describe two operational semantics for System B.
+  First a reference semantics, which evaluates System B expressions to values without taking binder quantities into account.
+  Then a allocation semantics,
+  keeping track of reference counts to allocated data.
+- We prove the allocation semantics evaluates System B expressions to the same value as the reference semantics,
+  while allocating less cells on the heap.
+- We provide machine checked proofs of all claims in the dependently typed programming language Agda.
 
 == Organisation
 
