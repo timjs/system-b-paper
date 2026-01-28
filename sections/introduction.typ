@@ -3,7 +3,7 @@
 
 = Introduction
 
-#draft[(Add more intro.)]
+#todo[Add more intro.]
 
 We describe the design space for safe memory management in programming languages along two orthogonal axes: _efficiency_ and _polymorphism_.
 
@@ -22,7 +22,7 @@ These stricter disciplines can also lead to code duplication.
 Then logically identical functionality must be expressed in multiple forms to accommodate different ownership or allocation requirements.
 This duplication increases code size and reduces maintainability.
 
-This work proposes a type system that classifies bindings into three ownership modes: _borrowed_, _consumed_, and _shared_.
+This work proposes a type system that classifies bindings into three ownership modes: _borrowed_, _owned_, and _shared_.
 Borrowed bindings cannot escape their scope:
 ownership remains with the caller, and no #draft[runtime ownership tracking] is required.
 Owned bindings must be used at most once,
@@ -142,10 +142,10 @@ This leads to code duplication when the same logic must be adapted for different
 
 Koka lies between the extremes on both axes.
 It uses reference counting for deterministic reclamation,
-with static analysis to reduce counting overhead and runtime reuse of uniquely owned cells to cut allocations @journals-pacmpl-LorenzenL22 @journals-pacmpl-LorenzenLSL24.
+with static analysis to reduce counting overhead and runtime reuse of uniquely owned cells to cut allocations @journals-pacmpl-LorenzenL22 @journals-pacmpl-LorenzenLSL24 @conf-pldi-ReinkingXML21.
 //TODO: add Perseus
-Its current type system supports first-order borrowed and consumed parameters;
-the type system proposed here extends this to higher-order parameters and introduces explicit borrowed, consumed, and shared modes.
+Its current type system supports first-order borrowed and owned parameters;
+the type system proposed here extends this to higher-order parameters and introduces explicit borrowed, owned, and shared modes.
 This allows the compiler to generate optimized implementations from a single function body and to automatically allocate non-escaping, sized values on the stack.
 
 
@@ -155,28 +155,28 @@ Our contributions are as follows.
 
 - We introduce System B, a calculus with quantity annotations on the binders.
   Binders can be borrowed, owned, or shared.
-  System B supports higher-order functions and datatypes.
-- Based on the associated quantities, we reveil some properties on bindings of each quantity:
+  System B supports higher-order functions, closures, and datatypes.
+  Based on the associated quantities, we reveil some properties on bindings of each quantity:
   / Borrowed bindings: correspond to second class usage.
-    They cannot be returned from functions or saved in data structures.
+    They cannot be returned from functions or be saved in data structures.
   / Owned bindings: correspond to first class linear usage.
     When unique at runtime, the referred data can be mutated in-place.
   / Shared bindings: correspond to first class unrestricted usage of data,
-    which is the classical [use case] in functional programming.
-- We compare our approach to existing solutions in other languages.
-- We present a bidirectional type system for System B,
-  taking care of [the properties of each binding quantity]
-  such as non-escaping, linear usage, and capturing properties for closures.
-- [We prove the induced type checking algorithm is sound and complete
-  with respect to the presented typing rules.]
+    which corresponds to traditional usage in functional programming.
+  We compare our approach to existing solutions in other languages.
+- We present an algorithmic type system for System B, in style of @journals-csur-DunfieldK21,
+  taking non-escaping and linear usage into account and supports proper capturing properties for closures.
+  We prove the induced type checking algorithm is sound and complete
+  with respect to the presented typing rules.
 - We describe two operational semantics for System B.
-  First a reference semantics, which evaluates System B expressions to values without taking binder quantities into account.
+  First a reference semantics,
+  which evaluates System B expressions to values without taking binder quantities into account.
   Then a allocation semantics,
   keeping track of reference counts to allocated data.
-- We prove the allocation semantics evaluates System B expressions to the same value as the reference semantics,
+  We prove the allocation semantics evaluates System B expressions to the same value as the reference semantics,
   while allocating less cells on the heap.
-- We provide machine checked proofs of all claims in the dependently typed programming language Agda.
+- We provide machine checked proofs of all claims in this paper in the dependently typed programming language Agda.
 
 == Organisation
 
-//TODO
+#todo[Write organisation.]

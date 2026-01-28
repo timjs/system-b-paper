@@ -9,30 +9,16 @@
 
 == Notation
 
-// #show math.upright: text
-
-```sysb
-x_0.f(many(x, n))                        ~~>  f(x_0, many(x,n))
-if e_0 then e_1 else e_2                 ~~>  case e_0 { True |-> e_1, False |-> e_2}
-when { g_1 |-> e_1; ...; else |-> e_n }  ~~>  case g_1 { True |-> e_1, False |-> when { ...; else |-> e_n } } \
-when { many(g |-> e, n); "else" |-> e_(n+1) } &~> "case" g_1 space { "True" |-> e_1; "False" |-> "when" { many(g |-> e, n-1);  "else" |-> e_(n+1)}} \
-"use" x_0 <- f(many(e, n)); e_0       &~> f(many(e, n), |x_0| e_0) \
-```
-$
-   x_0 triangle.stroked.r f(many(x, n))   &~> f(x_0, many(x,n)) \
-   "if" e_0 "then" e_1 "else" e_2         &~> "case" e_0 space { "True" |-> e_1, "False" |-> e_2} \
-   "when" { g_1 |-> e_1; ...; "else" |-> e_n } &~> "case" g_1 space { "True" |-> e_1, "False" |-> "when" { ...; "else" |-> e_n } } \
-   "when" { many(g |-> e, n); "else" |-> e_(n+1) } &~> "case" g_1 space { "True" |-> e_1; "False" |-> "when" { many(g |-> e, n-1);  "else" |-> e_(n+1)}} \
-   "use" x_0 <- f(many(e, n)); e_0       &~> f(many(e, n), |x_0| e_0) \
-$
-
-== Language
-
 We write:\
   - $many(x, n)$ for an _ordered_ set of $x$es of length $n$, so $x_1, ..., x_n$;
   - $more(x)$ for an _unordered, possibly empty_ set of $x$es;
   - $most(x)$ for an _unordered, non-empty_ set of $x$es;
   - $maybe(x)$ for an _optional_ $x$.
+
+== Language
+
+@fig:syntax-expressions, @fig:syntax-types, @fig:syntax-operations, @fig:syntax-values, and @fig:syntax-sugar
+contain all grammar rules of System B.
 
 #figure(caption: [Expression syntax])[$
   // grammar("Modules", m,
@@ -46,11 +32,11 @@ We write:\
     bind(q_0, x_0, e_0, e), "bind",
     borrow(more(x), e), "borrow",
   )
-  \ grammar("Expressions", e, short: #short-grammars, next: #true,
+  \ grammar("Expressions", e, short: #short-grammars, continuation: #true,
     abs(pars(q, x, tau, n), e_0), "abstract",
     app(e_0, many(e,n)), "apply",
   )
-  \ grammar("Expressions", e, short: #short-grammars, next: #true,
+  \ grammar("Expressions", e, short: #short-grammars, continuation: #true,
     create(c, many(e, k)), "construct",
     match(q_0, e_0, many(create(c, many(x,k)) -> e, m)), "case",
   )
@@ -65,7 +51,7 @@ We write:\
   //   tuple(many(b,n)), "tuple",
   //   variant(c, many(b,n)), "variant",
   //   ) \
-$]
+$]<fig:syntax-expressions>
 // #footnote[Note we have $b subset v subset e$]
 
 #figure(caption: [Type syntax])[$
@@ -82,17 +68,17 @@ $]
   )
   \ grammar("Quantities", q, short: #short-grammars,
     epsilon, "borrowed",
-    1, "linear",
-    omega, "unrestricted",
+    1, "owned",
+    omega, "shared",
   )
   \ grammar("Contexts", Gamma, short: #short-grammars,
     empty, "empty",
     Gamma\, par(q, x, tau), "cons",
   )
-$]
+$]<fig:syntax-types>
 
-#figure(caption: [Instruction syntax])[$
-  \ grammar("Instruction", i, short: #short-grammars,
+#figure(caption: [Operation syntax])[$
+  \ grammar("Operations", o, short: #short-grammars,
   // \ grammar("Operations", o, short: #short-grammars,
     Drop(a), "drop",
     Clone(a), "clone",
@@ -100,13 +86,13 @@ $]
     Alloc(k), "allocate",
     Free(k), "free",
   )
-  \ grammar("Instructions", i, short: #short-grammars, next: #true,
+  \ grammar("Operations", o, short: #short-grammars, continuation: #true,
     Pop, "pop",
     Push, "push",
     Reserve(k), "reserve",
   )
   \ grammar("Addresses", a, short: #short-grammars)
-$]
+$]<fig:syntax-operations>
 
 #figure(caption: [Updatable and writeable values])[$
   \ grammar("Updatable values", u^many(a,k), short: #short-grammars,
@@ -118,7 +104,27 @@ $]
     a, "address",
     diamond^k, "reuse token",
   )
-$]
+$]<fig:syntax-values>
+
+#figure(caption: [Sugar])[
+  ```sysb
+  x_0.f(x_1, ..., x_n))                       ~~>  f(x_0, x_1, ..., x_n)
+  if e_0 then e_1 else e_2                 ~~>  case e_0 { True |-> e_1, False |-> e_2}
+  ```
+  // when { g_1 |-> e_1; ...; else |-> e_n }  ~~>  case g_1 { True |-> e_1, False |-> when { ...; else |-> e_n } } \
+  // when { many(g |-> e, n); "else" |-> e_(n+1) } &~> "case" g_1 space { "True" |-> e_1; "False" |-> "when" { many(g |-> e, n-1);  "else" |-> e_(n+1)}} \
+  // "use" x_0 <- f(many(e, n)); e_0       &~> f(many(e, n), |x_0| e_0) \
+
+  // $
+  //    x_0.f(many(x, n))   &~> f(x_0, many(x,n)) \
+  //    "if" e_0 "then" e_1 "else" e_2         &~> "case" e_0 space { "True" |-> e_1, "False" |-> e_2} \
+  //    "when" { g_1 |-> e_1; ...; "else" |-> e_n } &~> "case" g_1 space { "True" |-> e_1, "False" |-> "when" { ...; "else" |-> e_n } } \
+  //    "when" { many(g |-> e, n); "else" |-> e_(n+1) } &~> "case" g_1 space { "True" |-> e_1; "False" |-> "when" { many(g |-> e, n-1);  "else" |-> e_(n+1)}} \
+  //    "use" x_0 <- f(many(e, n)); e_0       &~> f(many(e, n), |x_0| e_0) \
+  // $
+]<fig:syntax-sugar>
+
+#pagebreak()
 
 == Typing rules
 
@@ -168,16 +174,21 @@ $]<fig:typing>
   )) \
   judgements.spine.empty \
   judgements.spine.rest \
-$]
+$]<fig:typing-spine>
 
-The algorithmic typing rules of System B are given in @fig:typing
+The algorithmic typing rules of System B are given in @fig:typing and @fig:typing-spine.
 The typing relation $synthesize(Gamma, e, q, tau, Gamma')$ can be read as
-#quote[using expression $e$ with quantity $q$ can make use of all the bindings in context $Gamma$, which yields type $tau$ and a modified context $Gamma'$.]
+#quote[
+  making use of context $Gamma$, in quantity context $q$ expression $e$ yields type $tau$ and modified context $Gamma'$.
+]
+In the following subsections we explain these typing rules.
 
-== Variable lookup
+#todo[Introduce the term _quantity context_ properly.]
+
+=== Variable lookup
 
 Variable lookup comes in two flavours.
-Linear bindings with quantity $1$ are looked up and removed from the context as shown in rule $"Var"_1$.
+Owned bindings with quantity $1$ are looked up and removed from the context as shown in rule $"Var"_1$.
 Borrowed and unrestricted bindings with quantities $epsilon$ and $omega$ respectively,
 are looked up, but stay in the resulting context.
 Rules $"Var"_mu$ define this for $mu in {epsilon, omega}$ simultaneously.
@@ -185,9 +196,8 @@ Rules $"Var"_mu$ define this for $mu in {epsilon, omega}$ simultaneously.
 //   rules.var.one \
 //   rules.var.mu \
 // $
-
-We need a _weakening_ rule which states that unrestricted bindings can be used linearly.
-Rules $"Var"_pi$ also state that unrestricted bindings can be borrowed freely.
+We have a _weakening_ rule which states that unrestricted bindings can be used owned and borrowed freely.
+// Rules $"Var"_pi$ also state that unrestricted bindings can be borrowed freely.
 // #aside[
 //   Equivalently, we could define weakening as a general rule on bindings instead of a rule for variable lookup.
 //   However, this way our rule set would be nondeterministic.
@@ -199,16 +209,19 @@ Rules $"Var"_pi$ also state that unrestricted bindings can be borrowed freely.
 //   rules.var.pi
 // $
 
-To allow linear bindings, that is bindings with quantity $1$, to be borrowed,
+To allow owned bindings, that is bindings with quantity $1$, to be borrowed,
 we need to do additional bookkeeping.
 Borrows are only valid in a lexical region.
-After this region ends, we restore the original quantity on the binding.
+After this region ends, we restore the original quantity on the binding,
+as shown in rule $"Bor"_1$.
 // $
 //   rules.borrow.one
 // $
-#todo[Add explanation why linear functions cannot be borrowed.]
+#todo[Add explanation why owned functions cannot be borrowed.]
 Here, we need to take care borrowed bindings do not escape from this region.
-Therefore, we _lift_ quantity $q$ of the expression surroundings to be an owned quantity.
+Therefore, we check expression $e_0$ in an owned quantity context.
+/*
+_lift_ quantity $q$ of the expression surroundings to be an owned quantity.
 That is, borrowed expression surroundings are lifted to unrestricted contexts,
 the two owning quantities stay the same.
 The definition of lifting is as follows.
@@ -218,21 +231,23 @@ $
     lift(q), q,
   )
 $
+*/
 
-// #aside[
-  Alternatively, we could enforce explicit borrowing of unrestricted bindings, in the same way we do that for linear ones.
+/*
+  Alternatively, we could enforce explicit borrowing of unrestricted bindings, in the same way we do that for owned ones.
   We can change $"Borrow"_1$ to also include $omega$ bindings.
   Then, we need to alter $"Var"_pi$ to remove $epsilon$ as a free borrow.
   // $
   //   grayed(rules.var.weak\ rules.borrow.nu)
   // $
   This restricts the places where we can use explicit borrowing.
-// ]
-#todo[
-  Is this good or bad? Could help in borrow inference: only there were linear variables are used...
 ]
+#todo[
+  Is this good or bad? Could help in borrow inference: only there were owned variables are used...
+]
+*/
 
-== Functions
+=== Functions
 
 For function abstraction, we have three cases, one for each quantity.
 Depending on the quantity of the expression surroundings,
@@ -241,17 +256,17 @@ anonymous function blocks have access to different sets of bindings.
   As we are in a borrowed expression surroundings, function blocks cannot be returned nor stored: they are _second-class_.
   Therefore, these blocks have access to all borrowed bindings as well as all unrestricted bindings.
   As they can be called multiple times (the code is borrowed and can be used multiple times),
-  we cannot allow usage of linear bindings.
+  we cannot allow usage of owned bindings.
 / $omega$:
   For unrestricted expression surroundings the situation in different.
   As these function blocks are owned, they _can_ be stored or returned.
   Therefore, we need to make sure second-class bindings are not stored in its closure.
   Borrowed bindings should not escape, only unrestricted bindings are allowed.
 / $1$:
-  Similarly, linear blocks are first-class and can be saved or returned,
+  Similarly, owned blocks are first-class and can be saved or returned,
   so we cannot close over borrowed bindings.
   However, as we know that the resulting closure can only be used _once_,
-  in this case we can also allow access to linear bindings.
+  in this case we can also allow access to owned bindings.
 // $
 //   rules.abs.epsilon.uncurried\
 //   rules.abs.one.uncurried\
@@ -259,32 +274,34 @@ anonymous function blocks have access to different sets of bindings.
 // $
 
 For the bodies of the abstractions, there are two things to keep in mind.
-First, we should not be allowed to return bindings that are borrowed, so the quantity context of the body should be owning and cannot be $epsilon$.
+First, we should not allow to return bindings that are borrowed, so the quantity context of the body should be owning and cannot be $epsilon$.
 Second, the body _should not know_ how many times its result will be used.
-Take for example the identity function
-$
-declare("identity", arg(x, 1, tau), x) quad
-$
-which by definition [X] itself is unrestricted
-$
-bind(omega, "identity", closure(#none, arg(x, 1, tau), x), "").
-$
+Take for example the identity function from @exm:identity.
+// $
+// declare("identity", arg(x, 1, tau), x) quad
+// $
+// which by definition [X] itself is unrestricted
+// $
+// bind(omega, "identity", closure(#none, arg(x, 1, tau), x), "").
+// $
 This does not mean the body of the abstraction should be checked in an $omega$ context.
-We have binding $x$ linearly in the context, we can return it, as it is owned.
+We have binding $x$ owned in the context, we can return it, as it is owned.
 However, how the result will be used is a responsibility of the caller.
-This means, it suffices to check the body of an abstraction in a linear context!
+This means, it suffices to check the body of an abstraction in a owned context.
 
 To select bindings with the proper quantity from the context, we use _context filtering_ which is defined as follows.
+#todo[Fix $q$ being once upright, once italic...]
 $
-  function(Gamma^q : "Context" times "Quantity" -> "Context",
-    nothing^q, nothing,
-    (Gamma with arg(x, q, tau))^q, Gamma^q with arg(x, q, tau),
-    (Gamma with arg(x, q', tau))^q, Gamma^q,
+  function(Gamma div q : "Context" times "Quantity" -> "Context",
+    nothing div q, nothing,
+    (Gamma with arg(x, q, tau)) div q, Gamma div q with arg(x, q, tau),
+    (Gamma with arg(x, q', tau)) div q, Gamma div q,
   )
 $
 
 When functions are applied in an expression surroundings of quantity $q$,
 the function itself needs to be available $q$ times.
+/*
 Quantities of the arguments are determined by the function's type signature.
 // $
 //   rules.wilt.uncurried \
@@ -301,40 +318,37 @@ $
     lower(q), q,
   )
 $
+*/
 
-Problems arise when linear arguments are passed to functions.
-Linear arguments are owned and could be returned by a function.
+Problems arise when owned  arguments are passed to functions.
+Owned arguments are linear and could be returned by a function.
 We need to make sure the returned value can also only be used once.
-#block[
-  The identity function simply returns its only parameter.
+/*
+  The identity function simply from @exm:identity returns its only parameter.
   The quantity of this parameter cannot be $epsilon$,
   as borrowed parameters cannot be returned from functions,
   so it should be owned.
-  We could pick $omega$, but then we'd restrict ourselves because it cannot be used on linear arguments.
+  We could pick $omega$, but then we'd restrict ourselves because it cannot be used on owned arguments.
   Therefore, the sensible choice is to pick $1$.
   $
     declare("identity", arg(x, 1, tau), x)
   $
+*/
+Take for example:
+```sysb
+let 1 a = 42
+let ω b = identity(a)
+(b, b)
+```
+Variable $a$ is used by passing it to `identity`, the returned value $b$ however, is made available with quantity $omega$.
+Therefore, we are allowed to create a pair of two $b$'s and we've indirectly duplicated $a$...
 
-#[
-  $bind(1, a, 42,\
-    bind(omega, b, call("identity", a),\
-    tuple(b, b)
-    ))$
-]
+There are two solutions to this problem:
+1. Functions with owned parameters can only be called in a owned quantity context.
+2. Functions with owned parameters, when called in an unrestricted quantity context, need their arguments to be unrestricted as well.
 
-
-  Variable $a$ is used by passing it to $"identity"$, the returned value $b$ however, is made available with quantity $omega$.
-  Therefore, we are allowed to create a pair of two $b$'s and we've indirectly duplicated $a$...
-]
-There are two solutions:
-
-1. Functions with linear parameters can only be called in a linear quantity context.
-2. Functions with linear parameters, when called in an unrestricted quantity context, need their arguments to be unrestricted as well.
-
-The first option would be a severe restriction, as many functions with linear parameters should be usable on unrestricted arguments, and the results would need to be used linearly.
-The second option seems more logical.
-
+The first option would be a severe restriction, as many functions with owned parameters should be usable on unrestricted arguments, and the results would need to be used owned,
+so we go for the second option and restrict the quantities $many(q, n)$ in rule $"App"_omega$:
 // $
 //   rules.app.pi.uncurried \
 //   rules.app.omega.uncurried \
@@ -348,35 +362,41 @@ $
 $
 
 
-== Datatypes
+=== Datatypes
 
-When creating datatypes, we need to store data so each subexpression in constructors needs to be owned.
-Although we allow creating datatypes in borrowed expression surroundings,
-we lift the surrounding quantity to make sure stored data is owned.
+When creating datatypes in a $q$-context, we check each actual parameter in the same $q$-context.
+Allowing to create datatypes in a borrowed context,
+gives rise to optimisations like stack allocation.
 // $
 //   rules.construct.uncurried \
 // $
-Note the similarities and differences between rules $"Con"$ and $"App"$:
-- Both "lookup" the type of the function or constructor,
+Note the similarities and differences between the $"App"$ rules and rule $"Con"$:
+- Both lookup the type of the function or constructor,
   which directs the type of the arguments and the returntype of the application or construction.
 - In application, the quantities of the arguments are directed by the function type,
   while in construction, these quantities are directed by the expression surroundings.
 
 When destructuring datatypes, we have two quantities to take into account:
 - The quantity in which the whole destructuring expression is going to be evaluated.
-  We call this the _expression surrounding quantity_.
-- The quantity of the resulting parts of the datatype, that are made available in continuation of the program.
+  We call this the _quantity context_.
+  #todo[Explain this earlier]
+- The quantity of the matched parts of the datatype, that are made available in continuation of the program.
   This is also the quantity that the scrutiny needs to be available for.
   To accommodate for this,
   we annotate destructuring constructs in our language with an addition quantity $q_0$.
+  #todo[Add example on this in @sec:examples]
 // $
 //   rules.match.uncurried
 // $
 
 Because now we have multiple branches that can be taken, we need to _merge_ the resulting contexts of each branch and remove the freshly introduced bindings if still existing.
-As after branching, contexts can only differ in removed linear bindings,
+As after branching, contexts can only differ in removed owned bindings,
 merging two contexts is simply set intersection.
 #todo[Check this! Aren't we passing let-bound variables to the next argument?]
+
+=== Spine typing
+
+#todo[Explain spine typing rules from @fig:typing-spine]
 
 /*
 
@@ -602,4 +622,18 @@ $
   // \ evaluate(name: "Call",
   //   H, ref(a_0, r, fn(many(x,n)), )
   // )
-$]
+$]<fig:semantics>
+
+@fig:semantics contain our reference counted heap and stack semantics.
+
+#todo[
+  There are some problems with our operation semantics...
+  - We cannot make sure inserted `clone` and `drop` operations are safe to insert or not. So how to prove correctness?
+  - Because these semantics handle operations separate from expressions, proving preservation is on one hand easy (we only need to take care of basic expressions), but on the other hand incomplete (as we cannot prove correctness of the operations with respect to the typing system).
+
+  What we probably need to do is to make our type system truly linear (not affine linear).
+  That is, in the calculus the operations `drop`, `clone`, `borrow`, `alloc`, and `free` need to be part of _expressions_.
+  They should be checked by type system for proper usage.
+  (Off course, they can be inserted by some algorithm, like Perseus, but in this paper, they should be inserted by hand.)
+  This is needed to prove _preservation_ of our semantics with respect to our typing rules, but it would change our typing rules quite a bit...
+]

@@ -289,7 +289,7 @@
   ),
   case: (
     curried: $
-      judgement("Decon",
+      judgement("Des",
         synthesize(Gamma_0, e_0, q_0, tau_0, Gamma'_0),
         each(i in 1..2),
         lookup(Delta, C_i, Fn(tau_i, tau_0)),
@@ -298,7 +298,7 @@
       )
     $,
     uncurried: $
-      judgement("Decon",
+      judgement("Des",
         stacking(
           synthesize(Gamma_0, e_0, q_0, tau_0, Gamma'_0),
           spreading(

@@ -77,6 +77,15 @@
     show: keyword.with("in")
     show: keyword.with("as")
 
+    show: keyword.with("drop")
+    show: keyword.with("dup")
+    show: keyword.with("reuse")
+    show: keyword.with("alloc")
+    show: keyword.with("free")
+    show: keyword.with("push")
+    show: keyword.with("pop")
+    show: keyword.with("reserve")
+
     show: type.with("Unit") //TODO: what about constructor with same name?
     show: type.with("Pair") //TODO: what about constructor with same name?
     show: type.with("Bool")
@@ -144,6 +153,8 @@
     show "->": $->$
     show "|>": $triangle.stroked.r$
     show "==": $equiv$
+    show "=>": $=>$
+    show "~~>": $~~>$
 
     show regex("//.+"): greyed
 
