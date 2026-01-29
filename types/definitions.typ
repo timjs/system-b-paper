@@ -40,8 +40,8 @@ $
   input(contextIn) space meta(forces) space input(quantities) space meta(dot) space input(expressions) space meta(:) space output(types) space meta(#rotate(180deg, forces)) space output(contextOut)
 $
 
-#let div = $slash$
-#let with = $space union space$ //$comma space$
+#let div = $class("unary", |)$
+#let with = $comma space$ // $space union space$
 #let without = $-$
 #let merge = $ inter $ //FIXME: needs to be in display mode?
 
@@ -65,12 +65,14 @@ $
 $
 #let borrow(xs, body) = scope(borrow: xs, body) //${args | body space}$
 
-#let call(func, args) = $func ( args )$
-#let calls(f, xs, n) = $#f ( many(#xs, #n) )$
+#let apply(func, args) = $func ( args )$
+#let applies(f, xs, n) = $#f ( many(#xs, #n) )$
 
 #let split(quant, names, body, cont) = $keyword("split") quant dot names = body; space cont$
 #let create(ctor, args) = $ctor ( args )$
-#let match(quant, body, arms) = $keyword("case") quant dot body space {arms}$
+#let match(quant, body, arms) = $keyword("case") quant dot body space.en {arms}$
+#let arm(con, vars, expr) = $apply(con, vars) |-> expr$
+#let arms(con, vars, expr, count) = $many(arm(con, vars, expr), count)$
 
 //// Old ////
 #let arg(name, quant, type) = par(quant, name, type)
@@ -78,11 +80,10 @@ $
 // #let bor(args, body) = $""^args {body}$
 // #let bor(args, body) = $keyword("borrow") args keyword("in") body$
 
-#let closure(vars, pars, body) = $keyword("fn")^vars (pars) space body$
+#let define(vars, pars, body) = $keyword("fn")^vars (pars) space body$
 // #let abs(pars, body) = $|pars| space body$
 // #let abs(pars, body) = $lambda (pars) . space body$
-#let abs(pars, body) = closure("", pars, body)
-#let app(func, args) = $func(args)$
+#let abstract(pars, body) = define("", pars, body)
 
 #let tuple(..items) = {
   let items = items.pos().join([,])
@@ -98,7 +99,7 @@ $
 
 //// Types /////////////////////////////////////////////////////////////////////////////////////////
 
-#let Fn(..from, to) = {
+#let Function(..from, to) = {
   let from = from.pos().join($, space$)
   $(from) -> to$
   // let from = from.pos().join($times$)
@@ -124,6 +125,15 @@ $
 //// Instructions //////////////////////////////////////////////////////////////
 
 #let ref(ai, ri, vi) = $ai scripts(|->)^ri vi$
+
+#let instruction(name, arg, cont) = [
+  $keyword(name) med arg; space cont$
+]
+
+#let alloc = instruction.with("alloc")
+#let free = instruction.with("free")
+#let drop = instruction.with("drop")
+#let clone = instruction.with("clone")
 
 #let instruction(name, arg) = [
   $keyword(name) #if arg != none [$med arg$]$

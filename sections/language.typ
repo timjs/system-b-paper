@@ -17,42 +17,41 @@ We write:\
 
 == Language
 
-@fig:syntax-expressions, @fig:syntax-types, @fig:syntax-operations, @fig:syntax-values, and @fig:syntax-sugar
+@fig:syntax-expressions, @fig:syntax-types, @fig:syntax-values, and @fig:syntax-sugar
 contain all grammar rules of System B.
 
 #figure(caption: [Expression syntax])[$
-  // grammar("Modules", m,
+  // grammar("Programs", p,
   //   more(d)\; e, "main"
   // ) \
   // grammar("Declarations", d,
   //   type(X, many(c^n (many(tau, n)), m)), "types",
   // ) \
   \ grammar("Expressions", e, short: #short-grammars,
-    x, "variable",
-    bind(q_0, x_0, e_0, e), "bind",
-    borrow(more(x), e), "borrow",
+    a, "return",
+    bind(q, x, a, e), "bind",
+    match(q, y, arms(c, many(x, k), e, m)), "match",
   )
-  \ grammar("Expressions", e, short: #short-grammars, continuation: #true,
-    abs(pars(q, x, tau, n), e_0), "abstract",
-    app(e_0, many(e,n)), "apply",
-  )
-  \ grammar("Expressions", e, short: #short-grammars, continuation: #true,
-    create(c, many(e, k)), "construct",
-    match(q_0, e_0, many(create(c, many(x,k)) -> e, m)), "case",
+
+  \ grammar("Atomic eypressions", a, short: #short-grammars,
+    borrow(more(y), e), "borrow",
+    apply(y_0, many(y,n)), "apply",
+    v, "create",
   )
   \ grammar("Values", v, short: #short-grammars,
-    closure(many(z,k), many(x,n), e_0), "abstraction",
-    create(c, many(v,k)), "variant",
+    define(many(y, k-1), pars(q, x, tau, n), e_0), "abstract",
+    create(c, many(y, k)), "construct",
+    y, "lookup",
   )
-  \ grammar("Identifiers", x\, y\, z, short: #short-grammars)
-  \ grammar("Arity", k\, n\, m, short: #short-grammars)
-  \ grammar("Constants", c, short: #short-grammars)
   // grammar("Basic values", b,
   //   tuple(many(b,n)), "tuple",
   //   variant(c, many(b,n)), "variant",
   //   ) \
+  \ grammar("Identifiers", x\, y, short: #short-grammars)
+  \ grammar("Arity", n\, m\, k, short: #short-grammars)
+  \ grammar("Constants", c, short: #short-grammars)
 $]<fig:syntax-expressions>
-// #footnote[Note we have $b subset v subset e$]
+// #footnote[Note we have $b subset v subset a$]
 
 #figure(caption: [Type syntax])[$
   \ grammar("Types", tau, short: #short-grammars,
@@ -61,7 +60,7 @@ $]<fig:syntax-expressions>
     // List(tau), "list",
   )
   \ grammar("Function types", phi, short: #short-grammars,
-    Fn(many(qt(q, tau), n), tau_0), "function type",
+    Function(many(qt(q, tau), n), tau_0), "function type",
   )
   \ grammar("Data types", delta, short: #short-grammars,
     Variant(many(create(c, many(tau, n)), m)), "sum type",
@@ -73,35 +72,21 @@ $]<fig:syntax-expressions>
   )
   \ grammar("Contexts", Gamma, short: #short-grammars,
     empty, "empty",
-    Gamma\, par(q, x, tau), "cons",
+    Gamma\, par(q, x, tau), "binding",
+    Gamma\, diamond^k, "reuse token",
   )
 $]<fig:syntax-types>
 
-#figure(caption: [Operation syntax])[$
-  \ grammar("Operations", o, short: #short-grammars,
-  // \ grammar("Operations", o, short: #short-grammars,
-    Drop(a), "drop",
-    Clone(a), "clone",
-    Reuse(a), "reuse",
-    Alloc(k), "allocate",
-    Free(k), "free",
-  )
-  \ grammar("Operations", o, short: #short-grammars, continuation: #true,
-    Pop, "pop",
-    Push, "push",
-    Reserve(k), "reserve",
-  )
-  \ grammar("Addresses", a, short: #short-grammars)
-$]<fig:syntax-operations>
-
-#figure(caption: [Updatable and writeable values])[$
-  \ grammar("Updatable values", u^many(a,k), short: #short-grammars,
-    closure(many(a,k), many(x,n), e), "closure",
-    create(c, many(a,k)), "constructor",
+#figure(caption: [Grammars for (heap) semantics])[$
+  \ grammar("Expressions", e, short: #short-grammars,
+    ..., "expressions",
+    alloc(k, e), "allocate",
+    free(k, e), "free",
+    clone(x, e), "clone",
+    drop(x, e), "drop",
   )
   \ grammar("Writeable values", w, short: #short-grammars,
-    u^many(a,k), "updatable value",
-    a, "address",
+    v^many(y,k), "value",
     diamond^k, "reuse token",
   )
 $]<fig:syntax-values>
@@ -137,11 +122,11 @@ $]<fig:syntax-values>
     below(Gamma', arrow.b)
   )) \
   \ bold("Variables") \
-  judgements.var.one wide
-  judgements.var.mu \
-  judgements.var.weak \
-  judgements.borrow.one.one \
-  judgements.bind.one \
+  judgements.var.epsilon wide
+  judgements.var.nu \
+  judgements.var.sub \
+  judgements.borrow.nu \
+  judgements.bind.single \
   \ bold("Functions") \
   judgements.abs.epsilon.uncurried \
   judgements.abs.one.uncurried \
@@ -149,9 +134,14 @@ $]<fig:syntax-values>
   judgements.app.lambda.uncurried \
   judgements.app.omega.uncurried \
   \ bold("Datatypes") \
-  judgements.construct.one \
+  judgements.construct.uncurried \
   // judgements.construct.uncurried \
   judgements.case.uncurried \
+  \ bold("Memory") \
+  judgements.memory.alloc wide
+  judgements.memory.clone \
+  judgements.memory.free wide
+  judgements.memory.drop \
 $]<fig:typing>
 
 // #figure(caption: [Checking type rules for System B])[$
@@ -586,24 +576,24 @@ $
   )
 
   \ evaluate(name: "Call"_epsilon,
-    H, S, empty, epsilon, calls(a_0, a, n);
+    H, S, empty, epsilon, applies(a_0, a, n);
     H, S, #highlight($Clone(many(a,k))$)\; Push, epsilon, scope(substs(e, x, a, n));
-    where: ref(a_0, #none, closure(many(a,k), many(x,n), e) in H union S union F)
+    where: ref(a_0, #none, define(many(a,k), many(x,n), e) in H union S union F)
   )
   \ evaluate(name: "Call"_1,
-    H, S, empty, 1, calls(a_0, a, n);
+    H, S, empty, 1, applies(a_0, a, n);
     H, S, Drop(a_0)\; Push, 1, scope(substs(e, x, a, n));
-    where: ref(a_0, 1, closure(many(a,k), many(x,n), e) in H)
+    where: ref(a_0, 1, define(many(a,k), many(x,n), e) in H)
   )
   \ evaluate(name: "Call"_omega,
-    H, S, empty, omega, calls(a_0, a, n);
+    H, S, empty, omega, applies(a_0, a, n);
     H, S, Clone(many(a,k))\; Drop(a_0)\; Push, omega, scope(substs(e, x, a, n));
-    where: ref(a_0, r, closure(many(a,k), many(x,n), e) in H)
+    where: ref(a_0, r, define(many(a,k), many(x,n), e) in H)
   )
   \ evaluate(name: "Call"_(1,omega),
-    H, S, empty, (1,omega), calls(a_0, a, n);
+    H, S, empty, (1,omega), applies(a_0, a, n);
     H, S, Clone(many(a,k))\; Drop(a_0)\; Push, (1,omega), scope(substs(e, x, a, n));
-    where: ref(a_0, r, closure(many(a,k), many(x,n), e) in H)
+    where: ref(a_0, r, define(many(a,k), many(x,n), e) in H)
   )
 
   \ evaluate(name: "Return",
