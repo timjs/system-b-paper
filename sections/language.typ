@@ -32,11 +32,11 @@ contain all grammar rules of System B.
     borrow(more(y), e), "borrow",
     bind(q_0, x_0, e_0, e), "bind",
   )
-  \ grammar("Expressions", a, short: #short-grammars, continuation: #true,
+  \ grammar("Expressions", e, short: #short-grammars, continuation: #true,
     apply(e_0, many(e, n)), "apply",
     define(many(y, k-1), pars(q, x, tau, n), e_0), "abstract",
   )
-  \ grammar("Expressions", a, short: #short-grammars, continuation: #true,
+  \ grammar("Expressions", e, short: #short-grammars, continuation: #true,
     create(c, many(e, k)), "construct",
     match(q_0, e_0, arms(c, many(x, k), e, m)), "match",
   )
@@ -54,6 +54,29 @@ contain all grammar rules of System B.
   \ grammar("Constants", c, short: #short-grammars)
 $]<fig:syntax-expressions>
 // #footnote[Note we have $b subset v subset a$]
+
+
+#figure(caption: [Atomic expression syntax])[$
+  \ grammar("Expressions", e, short: #short-grammars,
+      bind(q, x, a, e), "bind",
+      match(q, y, arms(c, many(x, k), e, m)), "match",
+      a, "return",
+  )
+  \ grammar("Atomic expressions", a, short: #short-grammars,
+      // y, "lookup",
+      borrow(more(y), e), "borrow",
+      apply(y_0, many(y,n)), "apply",
+      v, "create",
+  )
+  \ grammar("Values", v, short: #short-grammars,
+    y, "lookup",
+    w, "writeable value",
+  )
+  \ grammar("Writeable values", w^many(y, k), short: #short-grammars,
+    define(many(y, k-1), pars(q, x, tau, n), e), "abstract",
+    create(c, many(y, k)), "construct",
+  )
+$]
 
 #figure(caption: [Type syntax])[$
   \ grammar("Types", tau, short: #short-grammars,
@@ -497,6 +520,8 @@ $
 
 Notes:
 - always $r >= 1$
+- only `let` changes/switches $q$-context (temporarily)
+- borrow and call create a fresh stack frame
 
 #figure(caption: [Reference counted heap and stack semantics for System B])[$
   \ framed(evaluate(
@@ -506,69 +531,71 @@ Notes:
 
   \ \ bold("Evaluation")
 
-  \ judgement("Evaluate",
-      evaluate(
-        H, S, q, e_0;
-        H, S, q, e_1;
-      ),
-      evaluate(
-        H, S, q, E[e_0];
-        H, S, q, E[e_1];
-      ),
-    )
+  // \ judgement("Evaluate",
+  //     evaluate(
+  //       H, S, q, e_0;
+  //       H, S, q, e_1;
+  //     ),
+  //     evaluate(
+  //       H, S, q, E[e_0];
+  //       H, S, q, E[e_1];
+  //     ),
+  //   )
 
   \ judgement("Bind",
       evaluate(
-        H, S, q_0, e_0;
-        H, S, q_0, y_0;
+        H, S, q_0, a_0;
+        H', S', q_0, y_0;
       ),
       evaluate(
-        H, S, q, bind(q_0, x_0, e_0, e);
-        H, S, q, substitute(e, x_0, y_0);
+        H, S, q, bind(q_0, x_0, a_0, e);
+        H', S', q, substitute(e, x_0, y_0);
       ),
     )
 
   \ judgement("Borrow",
       evaluate(
         H, S :: empty, q, e_0;
-        H, S :: F', q, y';
+        H', S :: F', q, y';
       ),
       evaluate(
         H, S, q, borrow(more(x), e_0);
-        H, S, q, y';
+        H', S, q, y';
       ),
     )
 
   \ judgement("Call",
       evaluate(
         H, S :: empty, q, substitutes(e_0, x, y, n);
-        H, S :: F', q, y';
+        H', S :: F', q, y';
       ),
       evaluate(
         H, S, q, y_0(many(y, n));
-        H, S, q, y';
+        H', S, q, y';
       ),
       where: ref(y_0, define(many(z, k-1), many(par(q, x, tau), n), e_0)) in H union S union E,
     )
   $ $
 
-  \ \ & bold("Binding")
-  \   & "No variable rules!"
-  \ evaluate(
-      H, S, q, bind(q_0, x_0, y_0, e);
-      H, S, q, substitute(e, x_0, y_0);
-    ),
+  // \ \ & bold("Binding")
+  // \   & "No variable rules!"
+  // \ evaluate(
+  //     H, S, q, bind(q_0, x_0, y_0, e);
+  //     H, S, q, substitute(e, x_0, y_0);
+  //   ),
 
   \ \ & bold("Storing")
   \ evaluate(name: "Store"_epsilon,
-      H, S :: F, epsilon, v^many(y, k);
-      H, S :: F with ref(y_0, v^many(y, k)), epsilon, y_0;
+      H, S :: F, epsilon, w^many(y, k);
+      H, S :: F with ref(y_0, w^many(y, k)), epsilon, y_0;
     )
   \ evaluate(name: "Store"_(1,omega),
-      H with diamond^k, S, mu, v^many(y, k);
-      H with ref(y_0, ri: 1, v^many(y, k)), S, mu, y_0;
+      H with diamond^k, S, mu, w^many(y, k);
+      H with ref(y_0, ri: 1, w^many(y, k)), S, mu, y_0;
       condition: mu in {1, omega},
     )
+
+  \ \ & bold("Allocating")
   \ evaluate(name: "Alloc",
       H, S, q, alloc(k, e);
       H with diamond^k, S, q, e;
@@ -578,15 +605,15 @@ Notes:
       H, S, q, e;
     )
   \ evaluate(name: "Clone",
-      H with ref(y, ri: r, v), S, q, clone(y, e);
-      H with ref(y, ri: r+1, v), S, q, e;
+      H with ref(y, ri: r, w), S, q, clone(y, e);
+      H with ref(y, ri: r+1, w), S, q, e;
     )
   \ evaluate(name: "Drop"^(>1),
-      H with ref(y, ri: r, v), S, q, drop(y, e);
-      H with ref(y, ri: r-1, v), S, q, e;
+      H with ref(y, ri: r, w), S, q, drop(y, e);
+      H with ref(y, ri: r-1, w), S, q, e;
     )
   \ evaluate(name: "Drop"^(=1), // "-Free"
-      H with ref(y, ri: 1, v), S, q, drop(y, e);
+      H with ref(y, ri: 1, w), S, q, drop(y, e);
       H, S, q, e;
     )
 

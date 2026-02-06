@@ -33,7 +33,6 @@
 #show: logos.init
 #show: templates.pretty-system-b
 #show: templates.pretty-raw.with("koka")
-#show: templates.basic-layout
 
 #show heading.where(level: 4).or(heading.where(level: 5)): set heading(numbering: none)
 #set math.lr(size: 1em) // Magic! :-D
