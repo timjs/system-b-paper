@@ -1,0 +1,6 @@
+[submodule "lib/basic"]
+	path = lib/basic
+	url = https://github.com/timjs/typst-basic.git
+[submodule "lib/acmart"]
+	path = lib/acmart
+	url = git@github.com:michel-steuwer/typst-acmart.git
