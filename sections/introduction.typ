@@ -148,6 +148,21 @@ Its current type system supports first-order borrowed and owned parameters;
 the type system proposed here extends this to higher-order parameters and introduces explicit borrowed, owned, and shared modes.
 This allows the compiler to generate optimized implementations from a single function body and to automatically allocate non-escaping, sized values on the stack.
 
+== Notes
+
+Functional programming is all about abstraction.
+With the $epsilon$, $1$, and $omega$ quantities we have control over memory management,
+on the level of functional abstraction:
+is a binding non-escaping, used once, or multiple times?
+Answering just this question, and categorising bindings in one of these three categories,
+will result in memory performant code,
+without overly complicated reasoning about memory management itself.
+We do not need to reason about stack vs heap allocation,
+alloc and free,
+cloning of resources,
+etc.
+*only about the way bindings are used in the context of a single function definition*.
+
 
 == Contributions
 

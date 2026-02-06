@@ -28,17 +28,19 @@ contain all grammar rules of System B.
   //   type(X, many(c^n (many(tau, n)), m)), "types",
   // ) \
   \ grammar("Expressions", e, short: #short-grammars,
-    a, "return",
-    bind(q, x, a, e), "bind",
-    match(q, y, arms(c, many(x, k), e, m)), "match",
-  )
-
-  \ grammar("Atomic eypressions", a, short: #short-grammars,
+    y, "lookup",
     borrow(more(y), e), "borrow",
-    apply(y_0, many(y,n)), "apply",
-    v, "create",
+    bind(q_0, x_0, e_0, e), "bind",
   )
-  \ grammar("Values", v, short: #short-grammars,
+  \ grammar("Expressions", a, short: #short-grammars, continuation: #true,
+    apply(e_0, many(e, n)), "apply",
+    define(many(y, k-1), pars(q, x, tau, n), e_0), "abstract",
+  )
+  \ grammar("Expressions", a, short: #short-grammars, continuation: #true,
+    create(c, many(e, k)), "construct",
+    match(q_0, e_0, arms(c, many(x, k), e, m)), "match",
+  )
+  \ grammar("Values", v^many(y, k), short: #short-grammars,
     define(many(y, k-1), pars(q, x, tau, n), e_0), "abstract",
     create(c, many(y, k)), "construct",
     y, "lookup",
@@ -82,8 +84,8 @@ $]<fig:syntax-types>
     ..., "expressions",
     alloc(k, e), "allocate",
     free(k, e), "free",
-    clone(x, e), "clone",
-    drop(x, e), "drop",
+    clone(y, e), "clone",
+    drop(y, e), "drop",
   )
   \ grammar("Writeable values", w, short: #short-grammars,
     v^many(y,k), "value",
@@ -473,15 +475,15 @@ $
   ..rows)
 }
 
-#let state((hs, ss, cs, qs, es)) = {
+#let state((hs, ss, qs, es)) = {
   // $ hs meta(bar.v) ss meta(bar.v) cs meta(tack.r) qs meta(dot) es $
   $
     #let mq = $q$
     #let me = $e$
     hs meta(bar.v)
     ss meta(tack.r)
-    #if cs != $empty$ [$cs meta(tack.r)$]
-    #if qs != $q$ or es != $e$ [$qs meta(dot) es$]
+    qs meta(dot)
+    es
   $
   // let sep = $space.thin bar.v space.thin$
   // $ hs meta(sep) ss meta(sep) cs meta(sep) qs meta(sep) es $
@@ -493,13 +495,125 @@ $
   ..args,
 )
 
+Notes:
+- always $r >= 1$
+
 #figure(caption: [Reference counted heap and stack semantics for System B])[$
   \ framed(evaluate(
-    H, S, more(o), q, e;
-    H', S', more(o'), q', e';
+    H, S, q, e;
+    H', S', q', e';
   ))
+
+  \ \ bold("Evaluation")
+
+  \ judgement("Evaluate",
+      evaluate(
+        H, S, q, e_0;
+        H, S, q, e_1;
+      ),
+      evaluate(
+        H, S, q, E[e_0];
+        H, S, q, E[e_1];
+      ),
+    )
+
+  \ judgement("Bind",
+      evaluate(
+        H, S, q_0, e_0;
+        H, S, q_0, y_0;
+      ),
+      evaluate(
+        H, S, q, bind(q_0, x_0, e_0, e);
+        H, S, q, substitute(e, x_0, y_0);
+      ),
+    )
+
+  \ judgement("Borrow",
+      evaluate(
+        H, S :: empty, q, e_0;
+        H, S :: F', q, y';
+      ),
+      evaluate(
+        H, S, q, borrow(more(x), e_0);
+        H, S, q, y';
+      ),
+    )
+
+  \ judgement("Call",
+      evaluate(
+        H, S :: empty, q, substitutes(e_0, x, y, n);
+        H, S :: F', q, y';
+      ),
+      evaluate(
+        H, S, q, y_0(many(y, n));
+        H, S, q, y';
+      ),
+      where: ref(y_0, define(many(z, k-1), many(par(q, x, tau), n), e_0)) in H union S union E,
+    )
   $ $
 
+  \ \ & bold("Binding")
+  \   & "No variable rules!"
+  \ evaluate(
+      H, S, q, bind(q_0, x_0, y_0, e);
+      H, S, q, substitute(e, x_0, y_0);
+    ),
+
+  \ \ & bold("Storing")
+  \ evaluate(name: "Store"_epsilon,
+      H, S :: F, epsilon, v^many(y, k);
+      H, S :: F with ref(y_0, v^many(y, k)), epsilon, y_0;
+    )
+  \ evaluate(name: "Store"_(1,omega),
+      H with diamond^k, S, mu, v^many(y, k);
+      H with ref(y_0, ri: 1, v^many(y, k)), S, mu, y_0;
+      condition: mu in {1, omega},
+    )
+  \ evaluate(name: "Alloc",
+      H, S, q, alloc(k, e);
+      H with diamond^k, S, q, e;
+    )
+  \ evaluate(name: "Free",
+      H with diamond^k, S, q, free(k, e);
+      H, S, q, e;
+    )
+  \ evaluate(name: "Clone",
+      H with ref(y, ri: r, v), S, q, clone(y, e);
+      H with ref(y, ri: r+1, v), S, q, e;
+    )
+  \ evaluate(name: "Drop"^(>1),
+      H with ref(y, ri: r, v), S, q, drop(y, e);
+      H with ref(y, ri: r-1, v), S, q, e;
+    )
+  \ evaluate(name: "Drop"^(=1), // "-Free"
+      H with ref(y, ri: 1, v), S, q, drop(y, e);
+      H, S, q, e;
+    )
+
+  \ \ & bold("Matching")
+  \ evaluate(name: "Match"_epsilon, // "-Borrow",
+    H, S, q, match(epsilon, y_0, arms(c, many(x, k), e, m));
+    H, S, q, substitutes(e_i, x, y, k_i);
+    where: ref(y_0, ri: r, create(c_i, many(y, k_i))) in H union S
+  )
+  \ evaluate(name: "Match"_1^(>1), // "-Alloc",
+    H with ref(y_0, ri: r, create(c_i, many(y, k_i))), S, q, match(1, y_0, arms(c, many(x, k), e, m));
+    H with ref(y_0, ri: r-1, create(c_i, many(y, k_i))) with diamond^k, S, q, substitutes(e_i, x, y, k_i);
+  )
+  \ evaluate(name: "Match"_1^(=1), // "-Reuse",
+    H with ref(y_0, ri: 1, create(c_i, many(y, k_i))), S, q, match(1, y_0, arms(c, many(x, k), e, m));
+    H with diamond^k, S, q, substitutes(e_i, x, y, k_i);
+  )
+  \ evaluate(name: "Match"_omega^(>1), // "-Drop",
+    H with ref(y_0, ri: r, create(c_i, many(y, k_i))), S, q, match(omega, y_0, arms(c, many(x, k), e, m));
+    H with ref(y_0, ri: r-1, create(c_i, many(y, k_i))), S, q, substitutes(e_i, x, y, k_i);
+  )
+  \ evaluate(name: "Match"_omega^(=1), // "-Free",
+    H with ref(y_0, ri: 1, create(c_i, many(y, k_i))), S, q, match(omega, y_0, arms(c, many(x, k), e, m));
+    H, S, q, substitutes(e_i, x, y, k_i);
+  )
+
+  /*
   \ & bold("Operations")
   \ evaluate(name: "Reserve",
     H, S :: s, Reserve(k)\; o, q, e;
@@ -612,6 +726,7 @@ $
   // \ evaluate(name: "Call",
   //   H, ref(a_0, r, fn(many(x,n)), )
   // )
+  */
 $]<fig:semantics>
 
 @fig:semantics contain our reference counted heap and stack semantics.

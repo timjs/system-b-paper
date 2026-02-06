@@ -72,7 +72,7 @@ $
 #let create(ctor, args) = $ctor ( args )$
 #let match(quant, body, arms) = $keyword("case") quant dot body space.en {arms}$
 #let arm(con, vars, expr) = $apply(con, vars) |-> expr$
-#let arms(con, vars, expr, count) = $many(arm(con, vars, expr), count)$
+#let arms(constructor, variables, expression, count) = $many(arm(constructor, variables, expression), count)$
 
 //// Old ////
 #let arg(name, quant, type) = par(quant, name, type)
@@ -124,7 +124,7 @@ $
 
 //// Instructions //////////////////////////////////////////////////////////////
 
-#let ref(ai, ri, vi) = $ai scripts(|->)^ri vi$
+#let ref(ai, ri: none, vi) = $ai scripts(|->)^ri vi$
 
 #let instruction(name, arg, cont) = [
   $keyword(name) med arg; space cont$
